@@ -1,10 +1,6 @@
 #include "main.h"
 
 UART_HandleTypeDef huart1;
-OPAMP_HandleTypeDef hopamp1;
-OPAMP_HandleTypeDef hopamp2;
-OPAMP_HandleTypeDef hopamp3;
-OPAMP_HandleTypeDef hopamp4;
 
 volatile uint16_t Triangle_DAC[SIZE_BUFFER_DAC] = {0};
 volatile uint32_t BUFF_ADC1_2[SIZE_BUFFER_ADC] = {0};
@@ -19,12 +15,12 @@ uint8_t UART_command[SIZE_UART_RX];
 
 struct flags flags = {0};
 
-void SystemClock_Config(void);
+static void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-static void MX_OPAMP4_Init(void);
 static void MX_OPAMP1_Init(void);
 static void MX_OPAMP2_Init(void);
 static void MX_OPAMP3_Init(void);
+static void MX_OPAMP4_Init(void);
 static void MX_USART1_UART_Init(void);
 
 int main(void)
@@ -38,45 +34,45 @@ int main(void)
     MX_OPAMP3_Init();
     MX_USART1_UART_Init();
 
-    Opamp_Start(OPAMP1);
-    Opamp_Start(OPAMP2);
-    Opamp_Start(OPAMP3);
-    Opamp_Start(OPAMP4);
+    Opamp_Enable(OPAMP1);
+    Opamp_Enable(OPAMP2);
+    Opamp_Enable(OPAMP3);
+    Opamp_Enable(OPAMP4);
 
     ADC1_2_Dual_Init();
     DAC1_Init();
     TIM2_Init();
     TIM8_Init();
     TIM3_Init();
-    Make_Ramp(RAMP1_COMMAND, ampl);
+    Make_Ramp(COMMAND_RAMP1, ampl);
 
     firstByteWait = 1;
     flags.en_adc_dac = 1;
     HAL_UART_Receive_IT(&huart1, UART_command, sizeof(UART_command) / sizeof(uint8_t));
 
     while (1) {
-        if ((UART_command[0] == START_COMMAND) && (UART_command[1] != 0)) {
+        if ((UART_command[0] == COMMAND_START) && (UART_command[1] != 0)) {
             Enable_DAC_ADC(flags);
             Collect_ADC_Complete(flags);
-        } else if (UART_command[0] == STOP_COMMAND) {
+        } else if (UART_command[0] == COMMAND_STOP) {
             UART_command[0] = 0;
             CLEAR_BIT(TIM8->CR1, TIM_CR1_CEN_Msk);
-        } else if (UART_command[0] == RESET_COMMAND) {
+        } else if (UART_command[0] == COMMAND_RESET) {
             HAL_NVIC_SystemReset();
-        } else if (UART_command[0] == TEST_COMMAND) {
+        } else if (UART_command[0] == COMMAND_TEST) {
             UART_command[0] = 0;
             HAL_UART_Transmit_IT(&huart1, (uint8_t *)"TEST", 4);
-        } else if (UART_command[0] == RAMP1_COMMAND) {
+        } else if (UART_command[0] == COMMAND_RAMP1) {
             UART_command[0] = 0;
             UART_command[1] = 0;
-            Make_Ramp(RAMP1_COMMAND, ampl);
+            Make_Ramp(COMMAND_RAMP1, ampl);
 
-        } else if (UART_command[0] == RAMP2_COMMAND) {
+        } else if (UART_command[0] == COMMAND_RAMP2) {
             UART_command[0] = 0;
             UART_command[1] = 0;
-            Make_Ramp(RAMP2_COMMAND, ampl);
+            Make_Ramp(COMMAND_RAMP2, ampl);
 
-        } else if (UART_command[0] == AMPL_COMMAND && flags.rx == 1) {
+        } else if (UART_command[0] == COMMAND_AMP && flags.rx == 1) {
             ampl = (UART_command[2]) + (UART_command[3] << 8);
             UART_command[0] = UART_command[1];
             UART_command[2] = 0;
@@ -90,7 +86,7 @@ int main(void)
  * @brief System Clock Configuration
  * @retval None
  */
-void SystemClock_Config(void)
+static void SystemClock_Config(void)
 {
     RCC_OscInitTypeDef RCC_OscInitStruct = {0};
     RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
@@ -136,13 +132,15 @@ void SystemClock_Config(void)
  */
 static void MX_OPAMP1_Init(void)
 {
-    hopamp1.Instance = OPAMP1;
-    hopamp1.Init.Mode = OPAMP_STANDALONE_MODE;
-    hopamp1.Init.NonInvertingInput = OPAMP_NONINVERTINGINPUT_IO0;
-    hopamp1.Init.InvertingInput = OPAMP_INVERTINGINPUT_IO1;
-    hopamp1.Init.TimerControlledMuxmode = OPAMP_TIMERCONTROLLEDMUXMODE_DISABLE;
-    hopamp1.Init.UserTrimming = OPAMP_TRIMMING_FACTORY;
-    if (HAL_OPAMP_Init(&hopamp1) != HAL_OK) {
+    static OPAMP_HandleTypeDef hopamp;
+
+    hopamp.Instance = OPAMP1;
+    hopamp.Init.Mode = OPAMP_STANDALONE_MODE;
+    hopamp.Init.NonInvertingInput = OPAMP_NONINVERTINGINPUT_IO0;
+    hopamp.Init.InvertingInput = OPAMP_INVERTINGINPUT_IO1;
+    hopamp.Init.TimerControlledMuxmode = OPAMP_TIMERCONTROLLEDMUXMODE_DISABLE;
+    hopamp.Init.UserTrimming = OPAMP_TRIMMING_FACTORY;
+    if (HAL_OPAMP_Init(&hopamp) != HAL_OK) {
         Error_Handler();
     }
 }
@@ -154,13 +152,15 @@ static void MX_OPAMP1_Init(void)
  */
 static void MX_OPAMP2_Init(void)
 {
-    hopamp2.Instance = OPAMP2;
-    hopamp2.Init.Mode = OPAMP_STANDALONE_MODE;
-    hopamp2.Init.NonInvertingInput = OPAMP_NONINVERTINGINPUT_IO0;
-    hopamp2.Init.InvertingInput = OPAMP_INVERTINGINPUT_IO1;
-    hopamp2.Init.TimerControlledMuxmode = OPAMP_TIMERCONTROLLEDMUXMODE_DISABLE;
-    hopamp2.Init.UserTrimming = OPAMP_TRIMMING_FACTORY;
-    if (HAL_OPAMP_Init(&hopamp2) != HAL_OK) {
+    static OPAMP_HandleTypeDef hopamp;
+
+    hopamp.Instance = OPAMP2;
+    hopamp.Init.Mode = OPAMP_STANDALONE_MODE;
+    hopamp.Init.NonInvertingInput = OPAMP_NONINVERTINGINPUT_IO0;
+    hopamp.Init.InvertingInput = OPAMP_INVERTINGINPUT_IO1;
+    hopamp.Init.TimerControlledMuxmode = OPAMP_TIMERCONTROLLEDMUXMODE_DISABLE;
+    hopamp.Init.UserTrimming = OPAMP_TRIMMING_FACTORY;
+    if (HAL_OPAMP_Init(&hopamp) != HAL_OK) {
         Error_Handler();
     }
 }
@@ -172,12 +172,14 @@ static void MX_OPAMP2_Init(void)
  */
 static void MX_OPAMP3_Init(void)
 {
-    hopamp3.Instance = OPAMP3;
-    hopamp3.Init.Mode = OPAMP_FOLLOWER_MODE;
-    hopamp3.Init.NonInvertingInput = OPAMP_NONINVERTINGINPUT_IO0;
-    hopamp3.Init.TimerControlledMuxmode = OPAMP_TIMERCONTROLLEDMUXMODE_DISABLE;
-    hopamp3.Init.UserTrimming = OPAMP_TRIMMING_FACTORY;
-    if (HAL_OPAMP_Init(&hopamp3) != HAL_OK) {
+    static OPAMP_HandleTypeDef hopamp;
+
+    hopamp.Instance = OPAMP3;
+    hopamp.Init.Mode = OPAMP_FOLLOWER_MODE;
+    hopamp.Init.NonInvertingInput = OPAMP_NONINVERTINGINPUT_IO0;
+    hopamp.Init.TimerControlledMuxmode = OPAMP_TIMERCONTROLLEDMUXMODE_DISABLE;
+    hopamp.Init.UserTrimming = OPAMP_TRIMMING_FACTORY;
+    if (HAL_OPAMP_Init(&hopamp) != HAL_OK) {
         Error_Handler();
     }
 }
@@ -189,12 +191,14 @@ static void MX_OPAMP3_Init(void)
  */
 static void MX_OPAMP4_Init(void)
 {
-    hopamp4.Instance = OPAMP4;
-    hopamp4.Init.Mode = OPAMP_FOLLOWER_MODE;
-    hopamp4.Init.NonInvertingInput = OPAMP_NONINVERTINGINPUT_IO3;
-    hopamp4.Init.TimerControlledMuxmode = OPAMP_TIMERCONTROLLEDMUXMODE_DISABLE;
-    hopamp4.Init.UserTrimming = OPAMP_TRIMMING_FACTORY;
-    if (HAL_OPAMP_Init(&hopamp4) != HAL_OK) {
+    static OPAMP_HandleTypeDef hopamp;
+
+    hopamp.Instance = OPAMP4;
+    hopamp.Init.Mode = OPAMP_FOLLOWER_MODE;
+    hopamp.Init.NonInvertingInput = OPAMP_NONINVERTINGINPUT_IO3;
+    hopamp.Init.TimerControlledMuxmode = OPAMP_TIMERCONTROLLEDMUXMODE_DISABLE;
+    hopamp.Init.UserTrimming = OPAMP_TRIMMING_FACTORY;
+    if (HAL_OPAMP_Init(&hopamp) != HAL_OK) {
         Error_Handler();
     }
 }

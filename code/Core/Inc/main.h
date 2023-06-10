@@ -21,14 +21,14 @@ extern "C" {
 #define MAX_ADC_PERIODS MAX_DAC_PERIODS *ADC_PER_DAC
 #define UART_BAUD_RATE  115200
 
-enum {
-    START_COMMAND = 1,
-    STOP_COMMAND = 2,
-    RESET_COMMAND = 3,
-    TEST_COMMAND = 4,
-    RAMP1_COMMAND = 5,
-    RAMP2_COMMAND = 6,
-    AMPL_COMMAND = 7
+enum command {
+    COMMAND_START = 1,
+    COMMAND_STOP = 2,
+    COMMAND_RESET = 3,
+    COMMAND_TEST = 4,
+    COMMAND_RAMP1 = 5,
+    COMMAND_RAMP2 = 6,
+    COMMAND_AMP = 7
 };
 
 struct message_ADC {
@@ -62,7 +62,7 @@ void TIM3_IRQHandler(void);
 void DAC1_Init(void);
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart);
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart);
-void Opamp_Start(OPAMP_TypeDef *opamp);
+void Opamp_Enable(OPAMP_TypeDef *opamp);
 void Make_Ramp(uint8_t ramp, uint16_t ampl);
 void Collect_ADC_Complete(struct flags flags_temp);
 void Enable_DAC_ADC(struct flags flags_temp);

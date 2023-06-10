@@ -41,14 +41,14 @@ void Collect_ADC_Complete(struct flags flags_temp)
 
 /**
 @brief Generates a ramp waveform based on the specified parameters.
-@param ramp: Type of ramp waveform (RAMP1_COMMAND or RAMP2_COMMAND)
+@param ramp: Type of ramp waveform (COMMAND_RAMP1 or COMMAND_RAMP2)
 @param ampl: Amplitude of the ramp waveform
 @retval None
 @note This function generates a ramp waveform based on the specified parameters.
 */
 void Make_Ramp(uint8_t ramp, uint16_t ampl)
 {
-    if (ramp == RAMP1_COMMAND) {
+    if (ramp == COMMAND_RAMP1) {
         int k_ramp = ((2 * ampl) / SIZE_BUFFER_DAC) + 1;
         for (uint16_t i = 0; i < SIZE_BUFFER_DAC; i++) {
             if (i < SIZE_BUFFER_DAC / 2 + 1) {
