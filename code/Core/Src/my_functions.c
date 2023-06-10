@@ -2,7 +2,6 @@
 
 extern UART_HandleTypeDef huart1;
 
-extern volatile uint16_t Triangle_DAC[SIZE_BUFFER_DAC];
 extern volatile uint16_t count_dma_period;
 extern volatile uint8_t period_number_dac;
 extern volatile uint8_t count_dac_period;
@@ -37,34 +36,6 @@ void Collect_ADC_Complete(struct flags flags_temp)
         HAL_UART_Transmit_IT(&huart1, (uint8_t *)&message_ADC12, sizeof(message_ADC12));
     }
     return;
-}
-
-/**
-@brief Generates a ramp waveform based on the specified parameters.
-@param ramp: Type of ramp waveform (COMMAND_RAMP1 or COMMAND_RAMP2)
-@param ampl: Amplitude of the ramp waveform
-@retval None
-@note This function generates a ramp waveform based on the specified parameters.
-*/
-void Make_Ramp(uint8_t ramp, uint16_t ampl)
-{
-    if (ramp == COMMAND_RAMP1) {
-        int k_ramp = ((2 * ampl) / SIZE_BUFFER_DAC) + 1;
-        for (uint16_t i = 0; i < SIZE_BUFFER_DAC; i++) {
-            if (i < SIZE_BUFFER_DAC / 2 + 1) {
-                Triangle_DAC[i] = (0 + i * k_ramp);
-            } else {
-                Triangle_DAC[i] = Triangle_DAC[SIZE_BUFFER_DAC - i];
-            }
-        }
-    } else // for RAMP2
-    {
-        int k_ramp = ((1 * ampl) / SIZE_BUFFER_DAC) + 1;
-        for (uint16_t i = 0; i < SIZE_BUFFER_DAC; i++) {
-            Triangle_DAC[i] = i * k_ramp;
-        }
-    }
-    MODIFY_REG(DMA2_Channel3->CMAR, DMA_CMAR_MA, (uint32_t)(Triangle_DAC)); // Adress of buffer
 }
 
 /**

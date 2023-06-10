@@ -1,15 +1,12 @@
-#include "main.h"
+#include "ramp.h"
 
 UART_HandleTypeDef huart1;
 
-volatile uint16_t Triangle_DAC[SIZE_BUFFER_DAC] = {0};
 volatile uint32_t BUFF_ADC1_2[SIZE_BUFFER_ADC] = {0};
 
 volatile uint16_t count_dma_period = 0;
 volatile uint8_t count_dac_period = 0;
 volatile uint8_t period_number_dac = 0;
-volatile uint8_t firstByteWait = 0;
-volatile uint16_t ampl = 200;
 
 uint8_t uart_buf[UART_RX_NBUF];
 
@@ -52,7 +49,7 @@ int main(void)
     DAC1_Init();
     TIM2_Init();
     TIM4_Init();
-    Make_Ramp(COMMAND_RAMP1, ampl);
+    ramp_make(200, RAMP_TYPE_NONSYM);
 
     uart_send_test_cmd(&huart1);
 
@@ -80,14 +77,11 @@ static void cmd_work(void)
     case COMMAND_TEST:
         uart_send_test_cmd(&huart1);
         break;
-    case COMMAND_RAMP1:
-        Make_Ramp(COMMAND_RAMP1, ampl);
-        break;
-    case COMMAND_RAMP2:
-        Make_Ramp(COMMAND_RAMP2, ampl);
+    case COMMAND_RAMP:
+        ramp_change_type(uart_cmd.arg);
         break;
     case COMMAND_AMP:
-        Make_Ramp(COMMAND_RAMP2, uart_cmd.arg);
+        ramp_change_amp(uart_cmd.arg);
         break;
     default:
         break;

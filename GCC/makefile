@@ -110,7 +110,10 @@ FLAGS_C += -std=gnu17
 FLAGS_C += $(OPT)
 FLAGS_C += -MMD -MP
 
-FLAGS_C_W += -Wall
+FLAGS_C_W := -Wall
+FLAGS_C_W += -Winline
+FLAGS_C_W += -Wextra
+FLAGS_C_W += -pedantic
 
 FLAGS_DEF := $(addprefix -D, $(DEFINES_C))
 FLAGS_INC := $(addprefix -I, $(INCLUDES)) $(addprefix -I, $(INCLUDES_CC))

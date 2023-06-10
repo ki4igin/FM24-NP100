@@ -10,7 +10,6 @@ extern "C" {
 
 #define SYS_CLOCK       72000000 // 72MHz
 #define SIZE_BUFFER_ADC 128
-#define SIZE_BUFFER_DAC 128
 #define UART_RX_NBUF    4
 #define TIM2_ARR        500                 // for DAC
 #define TIM4_ARR        125                 // for ADC
@@ -27,9 +26,8 @@ enum __attribute__((packed)) command {
     COMMAND_STOP = 2,
     COMMAND_RESET = 3,
     COMMAND_TEST = 4,
-    COMMAND_RAMP1 = 5,
-    COMMAND_RAMP2 = 6,
-    COMMAND_AMP = 7
+    COMMAND_RAMP = 5,
+    COMMAND_AMP = 6
 };
 
 struct message_ADC {
@@ -63,7 +61,6 @@ void DAC1_Init(void);
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart);
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart);
 void Opamp_Enable(OPAMP_TypeDef *opamp);
-void Make_Ramp(uint8_t ramp, uint16_t ampl);
 void Collect_ADC_Complete(struct flags flags_temp);
 void Enable_DAC_ADC(struct flags flags_temp);
 

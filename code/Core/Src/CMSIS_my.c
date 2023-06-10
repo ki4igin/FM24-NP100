@@ -1,7 +1,7 @@
 #include "main.h"
+#include "ramp.h"
 
 extern volatile uint32_t BUFF_ADC1_2[SIZE_BUFFER_ADC];
-extern volatile uint16_t Triangle_DAC[SIZE_BUFFER_DAC];
 
 /******************************************************************************/
 /* Function Name : ADC1_2_Dual_Init */
@@ -141,7 +141,7 @@ void DAC1_Init(void)
      * memory data size 16b (half-word)
      */
     MODIFY_REG(DMA2_Channel3->CPAR, DMA_CPAR_PA, (uint32_t)(&DAC->DHR12R1));
-    MODIFY_REG(DMA2_Channel3->CMAR, DMA_CMAR_MA, (uint32_t)(Triangle_DAC));
+    MODIFY_REG(DMA2_Channel3->CMAR, DMA_CMAR_MA, (uint32_t)(ramp_buf));
     SET_BIT(DMA2_Channel3->CCR, DMA_CCR_TCIE);
     SET_BIT(DMA2_Channel3->CCR, DMA_CCR_DIR);
     SET_BIT(DMA2_Channel3->CCR, DMA_CCR_CIRC);
@@ -150,7 +150,7 @@ void DAC1_Init(void)
     CLEAR_BIT(DMA2_Channel3->CCR, DMA_CCR_PINC);
     DMA2_Channel3->CCR |= (1 << DMA_CCR_PSIZE_Pos);
     DMA2_Channel3->CCR |= (1 << DMA_CCR_MSIZE_Pos);
-    DMA2_Channel3->CNDTR |= (SIZE_BUFFER_DAC << DMA_CNDTR_NDT_Pos);
+    DMA2_Channel3->CNDTR |= (RAMP_BUF_SIZE << DMA_CNDTR_NDT_Pos);
     SET_BIT(DMA2_Channel3->CCR, DMA_CCR_EN);
 
     NVIC_SetPriority(DMA2_Channel3_IRQn, 0);
