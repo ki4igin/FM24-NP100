@@ -16,100 +16,81 @@ struct message_ADC message_ADC12;
 static uint32_t temp_size = 0;
 static uint8_t count_rx = 0;
 
-
 /******************************************************************************/
 /*           Cortex-M4 Processor Interruption and Exception Handlers          */
 /******************************************************************************/
 /**
-  * @brief This function handles Non maskable interrupt.
-  */
+ * @brief This function handles Non maskable interrupt.
+ */
 void NMI_Handler(void)
 {
-
-  while (1)
-  {
-  }
-
+    while (1) {
+    }
 }
 
 /**
-  * @brief This function handles Hard fault interrupt.
-  */
+ * @brief This function handles Hard fault interrupt.
+ */
 void HardFault_Handler(void)
 {
-
-  while (1)
-  {
-
-  }
+    while (1) {
+    }
 }
 
 /**
-  * @brief This function handles Memory management fault.
-  */
+ * @brief This function handles Memory management fault.
+ */
 void MemManage_Handler(void)
 {
-
-  while (1)
-  {
-
-  }
+    while (1) {
+    }
 }
 
 /**
-  * @brief This function handles Pre-fetch fault, memory access fault.
-  */
+ * @brief This function handles Pre-fetch fault, memory access fault.
+ */
 void BusFault_Handler(void)
 {
-
-  while (1)
-  {
-
-  }
+    while (1) {
+    }
 }
 
 /**
-  * @brief This function handles Undefined instruction or illegal state.
-  */
+ * @brief This function handles Undefined instruction or illegal state.
+ */
 void UsageFault_Handler(void)
 {
-
-  while (1)
-  {
-
-  }
+    while (1) {
+    }
 }
 
 /**
-  * @brief This function handles System service call via SWI instruction.
-  */
+ * @brief This function handles System service call via SWI instruction.
+ */
 void SVC_Handler(void)
 {
-
 }
 
 /**
-  * @brief This function handles Debug monitor.
-  */
+ * @brief This function handles Debug monitor.
+ */
 void DebugMon_Handler(void)
 {
-
 }
 
 /**
-  * @brief This function handles Pendable request for system service.
-  */
+ * @brief This function handles Pendable request for system service.
+ */
 void PendSV_Handler(void)
 {
-
 }
 
 /**
-  * @brief This function handles System tick timer.
-  */
+ * @brief This function handles System tick timer.
+ */
 void SysTick_Handler(void)
 {
-  HAL_IncTick();
+    HAL_IncTick();
 }
 
 /******************************************************************************/
@@ -125,16 +106,14 @@ void SysTick_Handler(void)
 /******************************************************************************/
 void USART1_IRQHandler(void)
 {
-	if (__HAL_UART_GET_FLAG(&huart1, UART_FLAG_RXNE))
-  {
-    count_rx++; 
-		if (firstByteWait == 1)
-		{
-			CLEAR_REG(TIM3->CNT);
-			firstByteWait = 0;
-		}
-  }
-  HAL_UART_IRQHandler(&huart1);
+    if (__HAL_UART_GET_FLAG(&huart1, UART_FLAG_RXNE)) {
+        count_rx++;
+        if (firstByteWait == 1) {
+            CLEAR_REG(TIM3->CNT);
+            firstByteWait = 0;
+        }
+    }
+    HAL_UART_IRQHandler(&huart1);
 }
 
 /******************************************************************************/
@@ -151,38 +130,36 @@ void USART1_IRQHandler(void)
 
 void DMA1_Channel1_IRQHandler(void) // for ADC1_2 (dual)
 {
-	temp_size = SIZE_BUFFER_ADC*count_dma_period;
-	
-	if(READ_BIT(DMA1->ISR, DMA_ISR_HTIF1)) // half transfer complete
-	{
-		
-		SET_BIT(DMA1->IFCR, DMA_IFCR_CHTIF1_Msk); // Resetting the flag of interrupt
+    temp_size = SIZE_BUFFER_ADC * count_dma_period;
 
-		for(uint32_t i = 0; i < SIZE_BUFFER_ADC/2; i++)
-		{
-			message_ADC12.BUFF[i + temp_size] = BUFF_ADC1_2[i];
-		}
-
-	}	
-	else if(READ_BIT(DMA1->ISR, DMA_ISR_TCIF1)) // transfer complete
-	{
-		SET_BIT(DMA1->IFCR, DMA_IFCR_CTCIF1_Msk); // Resetting the flag of interrupt
-	
-		for(uint32_t i = SIZE_BUFFER_ADC/2; i < SIZE_BUFFER_ADC; i++)
-		{
-			message_ADC12.BUFF[i + temp_size] = BUFF_ADC1_2[i];
-		}
-		if (count_dma_period > MAX_ADC_PERIODS) count_dma_period = 0;
-		else count_dma_period++;
-
-		if(count_dma_period == period_number_dac*ADC_PER_DAC )
+    if (READ_BIT(DMA1->ISR, DMA_ISR_HTIF1)) // half transfer complete
     {
-			CLEAR_BIT(TIM2->CR1, TIM_CR1_CEN_Msk);
-      CLEAR_BIT(TIM8->CR1, TIM_CR1_CEN_Msk); // TIM8 disable				
-			flags.data_adc_collect = 1;
+        SET_BIT(DMA1->IFCR, DMA_IFCR_CHTIF1_Msk); // Resetting the flag of interrupt
+
+        for (uint32_t i = 0; i < SIZE_BUFFER_ADC / 2; i++) {
+            message_ADC12.BUFF[i + temp_size] = BUFF_ADC1_2[i];
+        }
+
+    } else if (READ_BIT(DMA1->ISR, DMA_ISR_TCIF1)) // transfer complete
+    {
+        SET_BIT(DMA1->IFCR, DMA_IFCR_CTCIF1_Msk); // Resetting the flag of interrupt
+
+        for (uint32_t i = SIZE_BUFFER_ADC / 2; i < SIZE_BUFFER_ADC; i++) {
+            message_ADC12.BUFF[i + temp_size] = BUFF_ADC1_2[i];
+        }
+        if (count_dma_period > MAX_ADC_PERIODS) {
+            count_dma_period = 0;
+        } else {
+            count_dma_period++;
+        }
+
+        if (count_dma_period == period_number_dac * ADC_PER_DAC) {
+            CLEAR_BIT(TIM2->CR1, TIM_CR1_CEN_Msk);
+            CLEAR_BIT(TIM8->CR1, TIM_CR1_CEN_Msk); // TIM8 disable
+            flags.data_adc_collect = 1;
+        }
+        HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13); // TEST period PIN
     }
-			HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13); // TEST period PIN
-	}
 }
 
 /******************************************************************************/
@@ -197,12 +174,12 @@ void DMA1_Channel1_IRQHandler(void) // for ADC1_2 (dual)
 
 void DMA2_Channel3_IRQHandler(void) // for DAC1
 {
-	if(READ_BIT(DMA2->ISR, DMA_ISR_TCIF3)) // transfer complete
-	{
-		HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_15); // TEST period PIN
-		SET_BIT(DMA2->IFCR, DMA_IFCR_CGIF3_Msk);
-		count_dac_period++;        	
-	}
+    if (READ_BIT(DMA2->ISR, DMA_ISR_TCIF3)) // transfer complete
+    {
+        HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_15); // TEST period PIN
+        SET_BIT(DMA2->IFCR, DMA_IFCR_CGIF3_Msk);
+        count_dac_period++;
+    }
 }
 
 /******************************************************************************/
@@ -219,11 +196,10 @@ void DMA2_Channel3_IRQHandler(void) // for DAC1
 
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 {
-	if(huart == &huart1)
-	{
-		HAL_UART_Receive_IT(&huart1, UART_command, sizeof(UART_command)/sizeof(uint8_t));
-		temp_size = 0;
-	}     
+    if (huart == &huart1) {
+        HAL_UART_Receive_IT(&huart1, UART_command, sizeof(UART_command) / sizeof(uint8_t));
+        temp_size = 0;
+    }
 }
 
 /******************************************************************************/
@@ -237,16 +213,18 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 /* Return : None */
 /******************************************************************************/
 
-void TIM3_IRQHandler(void) 
+void TIM3_IRQHandler(void)
 {
-	if(READ_BIT(TIM3->SR, TIM_SR_UIF)) 
-	{
-		CLEAR_BIT(TIM3->SR, TIM_SR_UIF);
-		firstByteWait = 1;
-		if(count_rx != 0) HAL_UART_Receive_IT(&huart1, UART_command, sizeof(UART_command)/sizeof(uint8_t));
-		count_rx = 0;
-	}
+    if (READ_BIT(TIM3->SR, TIM_SR_UIF)) {
+        CLEAR_BIT(TIM3->SR, TIM_SR_UIF);
+        firstByteWait = 1;
+        if (count_rx != 0) {
+            HAL_UART_Receive_IT(&huart1, UART_command, sizeof(UART_command) / sizeof(uint8_t));
+        }
+        count_rx = 0;
+    }
 }
+
 /******************************************************************************/
 /* Function Name : TIM3_IRQHandler */
 /* Description : Interrupt handler for TIM3. Handles the update interrupt */
@@ -259,10 +237,9 @@ void TIM3_IRQHandler(void)
 /******************************************************************************/
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
-	if(huart == &huart1)
-	{
-			count_rx = 0;
-			flags.rx = 1;
-			HAL_UART_Receive_IT(&huart1, UART_command, sizeof(UART_command)/sizeof(uint8_t));
-	}
+    if (huart == &huart1) {
+        count_rx = 0;
+        flags.rx = 1;
+        HAL_UART_Receive_IT(&huart1, UART_command, sizeof(UART_command) / sizeof(uint8_t));
+    }
 }
