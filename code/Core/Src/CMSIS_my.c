@@ -167,13 +167,14 @@ void TIM4_Init(void)
 {
     // clock to TIM4 72MHz
     // Update Event for ADC1
+    // slave mode: Gated
     SET_BIT(RCC->APB1ENR, RCC_APB1ENR_TIM4EN);
 
     CLEAR_REG(TIM4->CR1);
     MODIFY_REG(TIM4->CR2, TIM_CR2_MMS, 2 << TIM_CR2_MMS_Pos);
-    // CLEAR_BIT(TIM4->SMCR, TIM_SMCR_SMS);
     WRITE_REG(TIM4->PSC, 0);
     WRITE_REG(TIM4->ARR, TIM4_ARR - 1);
+    SET_BIT(TIM4->EGR, TIM_EGR_UG);
 }
 
 /******************************************************************************/
@@ -187,12 +188,12 @@ void TIM2_Init(void)
     // clock to TIM2 72MHz
     // Update Event for DAC1
     SET_BIT(RCC->APB1ENR, RCC_APB1ENR_TIM2EN);
-    CLEAR_BIT(TIM2->SMCR, TIM_SMCR_SMS);
+
     CLEAR_REG(TIM2->CR1);
-    MODIFY_REG(TIM2->PSC, TIM_PSC_PSC, 0);
-    MODIFY_REG(TIM2->ARR, TIM_ARR_ARR, (TIM2_ARR - 1));
-    CLEAR_BIT(TIM2->CR1, TIM_CR1_DIR_Msk);
     MODIFY_REG(TIM2->CR2, TIM_CR2_MMS, 2 << TIM_CR2_MMS_Pos);
+    WRITE_REG(TIM2->PSC, 0);
+    WRITE_REG(TIM2->ARR, TIM2_ARR - 1);
+    SET_BIT(TIM2->EGR, TIM_EGR_UG);
 }
 
 /******************************************************************************/
