@@ -13,7 +13,7 @@ volatile uint16_t count_dma_period = 0;
 volatile uint8_t count_dac_period = 0;	
 volatile uint8_t period_number_dac = 0;
 volatile uint8_t firstByteWait = 0;
-volatile uint16_t ampl = 4090;
+volatile uint16_t ampl = 200;
 
 uint8_t UART_command[SIZE_UART_RX];
 

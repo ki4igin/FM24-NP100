@@ -19,7 +19,7 @@ extern "C" {
 //#define FREQ_ADC           SYS_CLOCK/TIM8_ARR
 #define MAX_DAC_PERIODS            4 
 #define MAX_ADC_PERIODS  MAX_DAC_PERIODS*ADC_PER_DAC
-#define UART_BAUD_RATE          3000000
+#define UART_BAUD_RATE          115200
 
 
 enum
