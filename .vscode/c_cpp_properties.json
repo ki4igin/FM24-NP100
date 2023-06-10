@@ -1,0 +1,30 @@
+{
+    "configurations": [
+        {
+            "name": "gcc-arm",
+            "includePath": [
+                "${workspaceFolder}/code/**"
+            ],
+            "defines": [
+                "DEBUG",
+                "STM32F303xC",
+                "USE_FULL_LL_DRIVER",
+                "USE_HAL_DRIVER",
+                "HSE_STARTUP_TIMEOUT=100",
+                "LSE_STARTUP_TIMEOUT=5000",
+                "LSE_VALUE=32768",
+                "EXTERNAL_CLOCK_VALUE=8000000",
+                "EXTERNAL_CLOCK_VALUE=8000000",
+                "PREFETCH_ENABLE=1",
+                "LSI_VALUE=40000"
+            ],
+            "cStandard": "gnu17",
+            "compilerPath": "C:/toolchain/arm-gnu-toolchain-12.2.mpacbti-rel1-mingw-w64-i686-arm-none-eabi/bin/arm-none-eabi-gcc.exe",
+            "intelliSenseMode": "gcc-arm",
+            "browse": {
+                // "limitSymbolsToIncludedHeaders": true
+            }
+        }
+    ],
+    "version": 4
+}

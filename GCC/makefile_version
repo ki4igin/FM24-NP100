@@ -1,0 +1,49 @@
+include ./makefile_color
+
+GIT_DESCRIBE := $(shell git describe --t)
+GIT_TAG := $(firstword $(subst -, ,$(GIT_DESCRIBE)))
+GIT_OVER_COMMIT := $(subst $(GIT_TAG),,$(GIT_DESCRIBE))
+GIT_TAG_INFO := $(shell git show-ref --abbrev $(GIT_TAG))
+GIT_VERSION := $(subst v, ,$(notdir $(lastword $(GIT_TAG_INFO))))
+GIT_COMMIT := $(firstword $(GIT_TAG_INFO))
+
+VERSION := $(GIT_VERSION)
+VERSION_NUM := $(subst ., ,$(VERSION))
+ifeq ($(words $(VERSION_NUM)), 3)	
+	VERSION_MAJOR := $(word 1, $(VERSION_NUM))
+	VERSION_MINOR := $(word 2, $(VERSION_NUM))
+	VERSION_REV := $(word 3, $(VERSION_NUM))
+	VERSION_NUM := $$((\
+		$(VERSION_MAJOR) << 16 + $(VERSION_MINOR) << 8 + $(VERSION_REV)\
+	))
+else ifeq ($(words $(VERSION_NUM)), 2)	
+	VERSION_MAJOR := $(word 1, $(VERSION_NUM))
+	VERSION_MINOR := $(word 2, $(VERSION_NUM))
+	VERSION_NUM := $$((\
+		$(VERSION_MAJOR) * 256 + $(VERSION_MINOR)\
+	))
+else
+	VERSION_NUM := 0
+endif
+
+VERSION_COMMIT := 0x$(shell echo $(GIT_COMMIT) | tr a-f A-F)
+VERSION_STR := $(GIT_TAG)-$(VERSION_COMMIT)
+
+version_info:
+	$(call echo_green,Version: ,$(VERSION_STR))
+ifneq ($(GIT_OVER_COMMIT), )
+	$(call echo_yellow,Warning: ,over commit $(GIT_DESCRIBE))
+endif
+
+.PHONY: version_info
+version_info_complete:
+	@$(call echo_yellow,GIT_DESCRIBE:, $(GIT_DESCRIBE))
+	@$(call echo_yellow,GIT_TAG:, $(GIT_TAG))
+	@$(call echo_yellow,GIT_OVER_COMMIT:, $(GIT_OVER_COMMIT))
+	@$(call echo_yellow,GIT_TAG_INFO:, $(GIT_TAG_INFO))
+	@$(call echo_yellow,GIT_VERSION:, $(GIT_VERSION))
+	@$(call echo_yellow,GIT_COMMIT:, $(GIT_COMMIT))
+	@$(call echo_yellow,VERSION_COMMIT:, $(VERSION_COMMIT))
+	@$(call echo_yellow,VERSION_STR:, $(VERSION_STR))
+	@$(call echo_yellow,VERSION_NUM:, $(VERSION_NUM))
+
