@@ -11,10 +11,19 @@ volatile uint8_t period_number_dac = 0;
 volatile uint8_t firstByteWait = 0;
 volatile uint16_t ampl = 200;
 
-uint8_t UART_command[SIZE_UART_RX];
+uint8_t uart_buf[UART_RX_NBUF];
+
+static volatile struct uart_cmd {
+    enum command id;
+    uint32_t arg :24;
+} uart_cmd;
+
+volatile uint32_t uart_is_new_cmd = 0;
 
 struct flags flags = {0};
 
+static void cmd_work(void);
+static void uart_send_test_cmd(UART_HandleTypeDef *huart);
 static void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_OPAMP1_Init(void);
@@ -42,43 +51,77 @@ int main(void)
     ADC1_2_Dual_Init();
     DAC1_Init();
     TIM2_Init();
-    TIM3_Init();
     TIM4_Init();
     Make_Ramp(COMMAND_RAMP1, ampl);
 
-    firstByteWait = 1;
+    uart_send_test_cmd(&huart1);
+
     flags.en_adc_dac = 1;
-    HAL_UART_Receive_IT(&huart1, UART_command, sizeof(UART_command) / sizeof(uint8_t));
+    HAL_UART_Receive_IT(&huart1, uart_buf, UART_RX_NBUF);
 
     while (1) {
-        if ((UART_command[0] == COMMAND_START) && (UART_command[1] != 0)) {
-            Enable_DAC_ADC(flags);
-            Collect_ADC_Complete(flags);
-        } else if (UART_command[0] == COMMAND_STOP) {
-            UART_command[0] = 0;
-            CLEAR_BIT(TIM4->CR1, TIM_CR1_CEN);
-        } else if (UART_command[0] == COMMAND_RESET) {
-            HAL_NVIC_SystemReset();
-        } else if (UART_command[0] == COMMAND_TEST) {
-            UART_command[0] = 0;
-            HAL_UART_Transmit_IT(&huart1, (uint8_t *)"TEST", 4);
-        } else if (UART_command[0] == COMMAND_RAMP1) {
-            UART_command[0] = 0;
-            UART_command[1] = 0;
-            Make_Ramp(COMMAND_RAMP1, ampl);
-
-        } else if (UART_command[0] == COMMAND_RAMP2) {
-            UART_command[0] = 0;
-            UART_command[1] = 0;
-            Make_Ramp(COMMAND_RAMP2, ampl);
-
-        } else if (UART_command[0] == COMMAND_AMP && flags.rx == 1) {
-            ampl = (UART_command[2]) + (UART_command[3] << 8);
-            UART_command[0] = UART_command[1];
-            UART_command[2] = 0;
-            UART_command[3] = 0;
-            flags.rx = 0;
+        if (uart_is_new_cmd) {
+            uart_is_new_cmd = 0;
+            cmd_work();
         }
+    }
+}
+
+static void cmd_work(void)
+{
+    switch (uart_cmd.id) {
+    case COMMAND_START:
+        Enable_DAC_ADC(flags);
+        Collect_ADC_Complete(flags);
+        break;
+    case COMMAND_RESET:
+        HAL_NVIC_SystemReset();
+        break;
+    case COMMAND_TEST:
+        uart_send_test_cmd(&huart1);
+        break;
+    case COMMAND_RAMP1:
+        Make_Ramp(COMMAND_RAMP1, ampl);
+        break;
+    case COMMAND_RAMP2:
+        Make_Ramp(COMMAND_RAMP2, ampl);
+        break;
+    case COMMAND_AMP:
+        Make_Ramp(COMMAND_RAMP2, uart_cmd.arg);
+        break;
+    default:
+        break;
+    }
+}
+
+static void uart_send_test_cmd(UART_HandleTypeDef *huart)
+{
+    struct uart_cmd cmd = {
+        .id = COMMAND_TEST,
+        .arg = 0x112233};
+
+    HAL_UART_Transmit(huart, (uint8_t *)&cmd, sizeof(cmd), 1000);
+}
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+    if (huart == &huart1) {
+        uart_cmd = *(struct uart_cmd *)uart_buf;
+        uart_is_new_cmd = 1;
+    }
+}
+
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+{
+    if (huart == &huart1) {
+        HAL_UART_Receive_IT(&huart1, uart_buf, sizeof(uart_buf) / sizeof(uint8_t));
+    }
+}
+
+void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
+{
+    if (huart == &huart1) {
+        HAL_UART_Receive_IT(&huart1, uart_buf, sizeof(uart_buf) / sizeof(uint8_t));
     }
 }
 
@@ -225,6 +268,9 @@ static void MX_USART1_UART_Init(void)
     if (HAL_UART_Init(&huart1) != HAL_OK) {
         Error_Handler();
     }
+
+    HAL_UART_ReceiverTimeout_Config(&huart1, 20);
+    HAL_UART_EnableReceiverTimeout(&huart1);
 }
 
 /**

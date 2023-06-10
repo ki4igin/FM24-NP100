@@ -7,7 +7,7 @@ extern volatile uint16_t count_dma_period;
 extern volatile uint8_t period_number_dac;
 extern volatile uint8_t count_dac_period;
 
-extern uint8_t UART_command[SIZE_UART_RX];
+extern uint8_t uart_buf[UART_RX_NBUF];
 
 extern struct flags flags;
 extern struct message_ADC message_ADC12;
@@ -27,8 +27,8 @@ void Collect_ADC_Complete(struct flags flags_temp)
     if (flags_temp.data_adc_collect) {
         flags.data_adc_collect = 0;
         count_dac_period = 0;
-        UART_command[0] = 0;
-        UART_command[1] = 0;
+        uart_buf[0] = 0;
+        uart_buf[1] = 0;
         flags.en_adc_dac = 1;
         message_ADC12.preamble.start_byte = start_byte;
         message_ADC12.preamble.period_number = period_number_dac;
@@ -78,7 +78,7 @@ void Enable_DAC_ADC(struct flags flags_temp)
     if (flags_temp.en_adc_dac == 1) {
         SET_BIT(TIM2->CR1, TIM_CR1_CEN);
         SET_BIT(TIM4->CR1, TIM_CR1_CEN);
-        period_number_dac = UART_command[1];
+        period_number_dac = uart_buf[1];
         flags_temp.en_adc_dac = 0;
     }
 }

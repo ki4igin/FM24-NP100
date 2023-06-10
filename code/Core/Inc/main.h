@@ -11,7 +11,7 @@ extern "C" {
 #define SYS_CLOCK       72000000 // 72MHz
 #define SIZE_BUFFER_ADC 128
 #define SIZE_BUFFER_DAC 128
-#define SIZE_UART_RX    4
+#define UART_RX_NBUF    4
 #define TIM2_ARR        500                 // for DAC
 #define TIM4_ARR        125                 // for ADC
 #define ADC_PER_DAC     TIM2_ARR / TIM4_ARR // ADC_PERIODS_PER_DAC_PERIOD
@@ -21,7 +21,8 @@ extern "C" {
 #define MAX_ADC_PERIODS MAX_DAC_PERIODS *ADC_PER_DAC
 #define UART_BAUD_RATE  115200
 
-enum command {
+
+enum __attribute__((packed)) command {
     COMMAND_START = 1,
     COMMAND_STOP = 2,
     COMMAND_RESET = 3,
