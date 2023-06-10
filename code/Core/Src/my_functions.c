@@ -76,8 +76,8 @@ void Make_Ramp(uint8_t ramp, uint16_t ampl)
 void Enable_DAC_ADC(struct flags flags_temp)
 {
     if (flags_temp.en_adc_dac == 1) {
-        SET_BIT(TIM2->CR1, TIM_CR1_CEN_Msk);
-        SET_BIT(TIM8->CR1, TIM_CR1_CEN_Msk);
+        SET_BIT(TIM2->CR1, TIM_CR1_CEN);
+        SET_BIT(TIM4->CR1, TIM_CR1_CEN);
         period_number_dac = UART_command[1];
         flags_temp.en_adc_dac = 0;
     }

@@ -42,8 +42,8 @@ int main(void)
     ADC1_2_Dual_Init();
     DAC1_Init();
     TIM2_Init();
-    TIM8_Init();
     TIM3_Init();
+    TIM4_Init();
     Make_Ramp(COMMAND_RAMP1, ampl);
 
     firstByteWait = 1;
@@ -56,7 +56,7 @@ int main(void)
             Collect_ADC_Complete(flags);
         } else if (UART_command[0] == COMMAND_STOP) {
             UART_command[0] = 0;
-            CLEAR_BIT(TIM8->CR1, TIM_CR1_CEN_Msk);
+            CLEAR_BIT(TIM4->CR1, TIM_CR1_CEN);
         } else if (UART_command[0] == COMMAND_RESET) {
             HAL_NVIC_SystemReset();
         } else if (UART_command[0] == COMMAND_TEST) {

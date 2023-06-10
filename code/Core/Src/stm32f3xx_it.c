@@ -155,7 +155,7 @@ void DMA1_Channel1_IRQHandler(void) // for ADC1_2 (dual)
 
         if (count_dma_period == period_number_dac * ADC_PER_DAC) {
             CLEAR_BIT(TIM2->CR1, TIM_CR1_CEN_Msk);
-            CLEAR_BIT(TIM8->CR1, TIM_CR1_CEN_Msk); // TIM8 disable
+            CLEAR_BIT(TIM4->CR1, TIM_CR1_CEN_Msk);
             flags.data_adc_collect = 1;
         }
         HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13); // TEST period PIN

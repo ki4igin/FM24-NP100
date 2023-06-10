@@ -7,7 +7,7 @@ extern volatile uint16_t Triangle_DAC[SIZE_BUFFER_DAC];
 /* Function Name : ADC1_2_Dual_Init */
 /* Description : Initializes ADC1 and ADC2 in dual mode. Configures the */
 /* ADC settings, ADC channels, ADC triggers, DMA1 Channel 1, and interrupts. */
-/* Enables the ADCs and starts the conversions, but not start TIM8 */
+/* Enables the ADCs and starts the conversions, but not start TIM4 */
 /* Parameters : None */
 /* Return : None */
 /******************************************************************************/
@@ -34,7 +34,7 @@ void ADC1_2_Dual_Init(void)
      * Resolution 12 bit
      * 3 channel for first conversation (PA2)
      * Left alignment
-     * External event Timer 8 TRGO
+     * External event Timer 4 TRGO
      * External TRG enable, Rising edge
      * Channel 3, 15 cycles for conversation
      * Enable DMA
@@ -43,7 +43,7 @@ void ADC1_2_Dual_Init(void)
     CLEAR_BIT(ADC1->CFGR, ADC_CFGR_RES_1);
     SET_BIT(ADC1->SQR1, (3 << ADC_SQR1_SQ1_Pos));
     SET_BIT(ADC1->CFGR, ADC_CFGR_ALIGN);
-    MODIFY_REG(ADC1->CFGR, ADC_CFGR_EXTSEL, 7 << ADC_CFGR_EXTSEL_Pos);
+    MODIFY_REG(ADC1->CFGR, ADC_CFGR_EXTSEL, 12 << ADC_CFGR_EXTSEL_Pos);
     MODIFY_REG(ADC1->CFGR, ADC_CFGR_EXTEN, 1 << ADC_CFGR_EXTEN_Pos);
     MODIFY_REG(ADC1->SMPR1, ADC_SMPR1_SMP3, 1 << ADC_SMPR1_SMP3_Pos);
     SET_BIT(ADC1->CFGR, ADC_CFGR_DMAEN);
@@ -158,22 +158,22 @@ void DAC1_Init(void)
 }
 
 /******************************************************************************/
-/* Function Name : TIM8_Init */
-/* Description : Initializes TIM8 and configures its settings for ADC. */
+/* Function Name : TIM4_Init */
+/* Description : Initializes TIM4 and configures its settings for ADC. */
 /* Parameters : None */
 /* Return : None */
 /******************************************************************************/
-void TIM8_Init(void)
+void TIM4_Init(void)
 {
-    // clock to TIM8 72MHz
+    // clock to TIM4 72MHz
     // Update Event for ADC1
-    SET_BIT(RCC->APB2ENR, RCC_APB2ENR_TIM8EN);
-    CLEAR_BIT(TIM8->SMCR, TIM_SMCR_SMS);
-    CLEAR_REG(TIM8->CR1);
-    MODIFY_REG(TIM8->PSC, TIM_PSC_PSC, 0);
-    MODIFY_REG(TIM8->ARR, TIM_ARR_ARR, (TIM8_ARR - 1));
-    CLEAR_BIT(TIM8->CR1, TIM_CR1_DIR_Msk);
-    MODIFY_REG(TIM8->CR2, TIM_CR2_MMS, 2 << TIM_CR2_MMS_Pos);
+    SET_BIT(RCC->APB1ENR, RCC_APB1ENR_TIM4EN);
+
+    CLEAR_REG(TIM4->CR1);
+    MODIFY_REG(TIM4->CR2, TIM_CR2_MMS, 2 << TIM_CR2_MMS_Pos);
+    // CLEAR_BIT(TIM4->SMCR, TIM_SMCR_SMS);
+    WRITE_REG(TIM4->PSC, 0);
+    WRITE_REG(TIM4->ARR, TIM4_ARR - 1);
 }
 
 /******************************************************************************/

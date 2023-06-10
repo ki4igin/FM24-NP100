@@ -13,10 +13,10 @@ extern "C" {
 #define SIZE_BUFFER_DAC 128
 #define SIZE_UART_RX    4
 #define TIM2_ARR        500                 // for DAC
-#define TIM8_ARR        125                 // for ADC
-#define ADC_PER_DAC     TIM2_ARR / TIM8_ARR // ADC_PERIODS_PER_DAC_PERIOD
+#define TIM4_ARR        125                 // for ADC
+#define ADC_PER_DAC     TIM2_ARR / TIM4_ARR // ADC_PERIODS_PER_DAC_PERIOD
 // #define FREQ_DAC           SYS_CLOCK/TIM2_ARR
-// #define FREQ_ADC           SYS_CLOCK/TIM8_ARR
+// #define FREQ_ADC           SYS_CLOCK/TIM4_ARR
 #define MAX_DAC_PERIODS 4
 #define MAX_ADC_PERIODS MAX_DAC_PERIODS *ADC_PER_DAC
 #define UART_BAUD_RATE  115200
@@ -53,11 +53,10 @@ void Error_Handler(void);
 void ADC1_2_Dual_Init(void);
 void DMA1_Channel1_IRQHandler(void);
 void DMA2_Channel3_IRQHandler(void);
-void TIM8_UP_IRQHandler(void);
-void TIM8_Init(void);
 void TIM2_IRQHandler(void);
 void TIM2_Init(void);
 void TIM3_Init(void);
+void TIM4_Init(void);
 void TIM3_IRQHandler(void);
 void DAC1_Init(void);
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart);
