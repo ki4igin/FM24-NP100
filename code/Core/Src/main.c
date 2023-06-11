@@ -4,7 +4,7 @@
 
 UART_HandleTypeDef huart1;
 
-uint32_t number_samples = 128;
+uint32_t number_samples = ADC_BUF_LEN_MAX / 4;
 
 uint8_t uart_buf[UART_RX_NBUF];
 
@@ -133,8 +133,6 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 
 static void Collect_ADC_Complete(void)
 {
-    // pac_adc.preamble.number_samples = number_samples;
-    // pac_adc.preamble.size = SIZE_BUFFER_ADC * count_dma_period * sizeof(uint32_t);
     HAL_UART_Transmit_IT(
         &huart1,
         (uint8_t *)&pac_adc,
