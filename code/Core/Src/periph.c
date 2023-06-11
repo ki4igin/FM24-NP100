@@ -192,28 +192,3 @@ void TIM2_Init(void)
     SET_BIT(TIM2->EGR, TIM_EGR_UG);
     CLEAR_BIT(TIM2->SR, TIM_SR_UIF);
 }
-
-/******************************************************************************/
-/* Function Name : TIM3_Init */
-/* Description : Initializes TIM3 and configures its settings for DAC. */
-/* This timer is used for timing the duration within which a complete */
-/* UART_RX is expected to arrive. Delay = 2 ms */
-/* Parameters : None */
-/* Return : None */
-/******************************************************************************/
-void TIM3_Init(void)
-{
-    // clock to TIM3 72MHz
-    // 500 Hz TIM3
-    SET_BIT(RCC->APB1ENR, RCC_APB1ENR_TIM3EN);
-    CLEAR_BIT(TIM3->SMCR, TIM_SMCR_SMS);
-    CLEAR_REG(TIM3->CR1);
-    MODIFY_REG(TIM3->PSC, TIM_PSC_PSC, 20 - 1);
-    MODIFY_REG(TIM3->ARR, TIM_ARR_ARR, (7200 - 1));
-    SET_BIT(TIM3->DIER, TIM_DIER_UIE);
-    CLEAR_BIT(TIM3->CR1, TIM_CR1_DIR_Msk);
-    MODIFY_REG(TIM3->CR2, TIM_CR2_MMS, 2 << TIM_CR2_MMS_Pos);
-    SET_BIT(TIM3->CR1, TIM_CR1_CEN_Msk);
-    NVIC_SetPriority(TIM3_IRQn, 4);
-    NVIC_EnableIRQ(TIM3_IRQn);
-}
