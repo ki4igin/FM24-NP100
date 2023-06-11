@@ -5,8 +5,8 @@ UART_HandleTypeDef huart1;
 volatile uint32_t BUFF_ADC1_2[SIZE_BUFFER_ADC] = {0};
 
 volatile uint16_t count_dma_period = 0;
-volatile uint8_t count_dac_period = 0;
-volatile uint8_t number_periods = 0;
+volatile uint8_t count_periods = 0;
+volatile uint32_t number_periods = 0;
 
 uint8_t uart_buf[UART_RX_NBUF];
 
@@ -17,7 +17,7 @@ static volatile struct uart_cmd {
 
 volatile uint32_t uart_is_new_cmd = 0;
 
-struct flags flags = {0};
+volatile struct flags flags = {0};
 
 static void cmd_work(struct uart_cmd);
 static void uart_send_test_cmd(UART_HandleTypeDef *huart);
@@ -53,7 +53,6 @@ int main(void)
 
     uart_send_test_cmd(&huart1);
 
-    flags.en_adc_dac = 1;
     HAL_UART_Receive_IT(&huart1, uart_buf, UART_RX_NBUF);
 
     while (1) {
@@ -61,6 +60,11 @@ int main(void)
             uart_is_new_cmd = 0;
             cmd_work(uart_cmd);
         }
+        if (flags.data_adc_collect) {
+            flags.data_adc_collect = 0;            
+            Collect_ADC_Complete();
+        }
+
     }
 }
 
@@ -69,8 +73,7 @@ static void cmd_work(struct uart_cmd cmd)
     switch (cmd.id) {
     case COMMAND_START:
         number_periods = cmd.arg;
-        Enable_DAC_ADC(flags);
-        Collect_ADC_Complete(flags);
+        Enable_DAC_ADC();        
         break;
     case COMMAND_RESET:
         HAL_NVIC_SystemReset();
@@ -109,14 +112,13 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 {
     if (huart == &huart1) {
-        HAL_UART_Receive_IT(&huart1, uart_buf, sizeof(uart_buf) / sizeof(uint8_t));
     }
 }
 
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 {
     if (huart == &huart1) {
-        HAL_UART_Receive_IT(&huart1, uart_buf, sizeof(uart_buf) / sizeof(uint8_t));
+        HAL_UART_Receive_IT(&huart1, uart_buf, UART_RX_NBUF);
     }
 }
 

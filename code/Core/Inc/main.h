@@ -41,7 +41,6 @@ struct message_ADC {
 };
 
 struct flags {
-    uint32_t en_adc_dac       :1;
     uint32_t rx               :1;
     uint32_t data_adc_collect :1;
     uint32_t adc_start        :1;
@@ -61,8 +60,8 @@ void DAC1_Init(void);
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart);
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart);
 void Opamp_Enable(OPAMP_TypeDef *opamp);
-void Collect_ADC_Complete(struct flags flags_temp);
-void Enable_DAC_ADC(struct flags flags_temp);
+void Collect_ADC_Complete(void);
+void Enable_DAC_ADC(void);
 
 #ifdef __cplusplus
 }
