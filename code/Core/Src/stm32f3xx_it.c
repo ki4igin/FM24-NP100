@@ -5,11 +5,10 @@ extern UART_HandleTypeDef huart1;
 
 extern volatile uint16_t count_dma_period;
 extern volatile uint8_t count_periods;
-extern volatile uint8_t number_periods;
 extern volatile uint32_t BUFF_ADC1_2[SIZE_BUFFER_ADC];
 extern volatile uint8_t firstByteWait;
 extern uint8_t uart_buf[UART_RX_NBUF];
-extern struct flags flags;
+extern volatile struct flags flags;
 
 struct message_ADC message_ADC12;
 
@@ -138,6 +137,8 @@ void DMA1_Channel1_IRQHandler(void)
             message_ADC12.BUFF[i + temp_size] = BUFF_ADC1_2[i];
         }
 
+        count_dma_period++;
+
         HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13); // TEST period PIN
     }
 }
@@ -159,19 +160,19 @@ void DMA2_Channel3_IRQHandler(void)
         // TEST period PIN
         HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_15);
         SET_BIT(DMA2->IFCR, DMA_IFCR_CGIF3);
-    }
-}
 
-void TIM2_IRQHandler(void)
-{
-    if (READ_BIT(TIM2->SR, TIM_SR_UIF)) {
-        CLEAR_BIT(TIM2->SR, TIM_SR_UIF);
+        if (READ_BIT(TIM4->CR1, TIM_CR1_CEN)) {
+            if (++count_periods >= number_periods) {
+                count_periods = 0;
+                CLEAR_BIT(TIM4->CR1, TIM_CR1_CEN);
+                flags.data_adc_collect = 1;
+            }
+        }
 
-        if (count_periods++ >= number_periods) {
-            count_periods = 0;
-            CLEAR_BIT(TIM2->CR1, TIM_CR1_CEN);
-            CLEAR_BIT(TIM4->CR1, TIM_CR1_CEN);
-            flags.data_adc_collect = 1;
+        if (start_req) {
+            count_dma_period = 0;
+            start_req = 0;
+            SET_BIT(TIM4->CR1, TIM_CR1_CEN);
         }
     }
 }

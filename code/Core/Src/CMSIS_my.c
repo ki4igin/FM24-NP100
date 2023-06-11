@@ -1,8 +1,6 @@
 #include "main.h"
 #include "ramp.h"
 
-extern volatile uint32_t BUFF_ADC1_2[SIZE_BUFFER_ADC];
-
 /******************************************************************************/
 /* Function Name : ADC1_2_Dual_Init */
 /* Description : Initializes ADC1 and ADC2 in dual mode. Configures the */
@@ -195,10 +193,6 @@ void TIM2_Init(void)
     WRITE_REG(TIM2->ARR, TIM2_ARR - 1);
     SET_BIT(TIM2->EGR, TIM_EGR_UG);
     CLEAR_BIT(TIM2->SR, TIM_SR_UIF);
-    SET_BIT(TIM2->DIER, TIM_DIER_UIE);
-
-    NVIC_SetPriority(TIM2_IRQn, 4);
-    NVIC_EnableIRQ(TIM2_IRQn);
 }
 
 /******************************************************************************/

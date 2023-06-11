@@ -17,6 +17,8 @@ static volatile struct uart_cmd {
 
 volatile uint32_t uart_is_new_cmd = 0;
 
+volatile uint32_t start_req = 0;
+
 volatile struct flags flags = {0};
 
 static void cmd_work(struct uart_cmd);
@@ -50,6 +52,7 @@ int main(void)
     TIM2_Init();
     TIM4_Init();
     ramp_make(200, RAMP_TYPE_NONSYM);
+    SET_BIT(TIM2->CR1, TIM_CR1_CEN);
 
     uart_send_test_cmd(&huart1);
 
@@ -61,10 +64,9 @@ int main(void)
             cmd_work(uart_cmd);
         }
         if (flags.data_adc_collect) {
-            flags.data_adc_collect = 0;            
+            flags.data_adc_collect = 0;
             Collect_ADC_Complete();
         }
-
     }
 }
 
@@ -73,7 +75,7 @@ static void cmd_work(struct uart_cmd cmd)
     switch (cmd.id) {
     case COMMAND_START:
         number_periods = cmd.arg;
-        Enable_DAC_ADC();        
+        Enable_DAC_ADC();
         break;
     case COMMAND_RESET:
         HAL_NVIC_SystemReset();

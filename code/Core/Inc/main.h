@@ -20,7 +20,6 @@ extern "C" {
 #define MAX_ADC_PERIODS MAX_DAC_PERIODS *ADC_PER_DAC
 #define UART_BAUD_RATE  115200
 
-
 enum __attribute__((packed)) command {
     COMMAND_START = 1,
     COMMAND_STOP = 2,
@@ -45,6 +44,10 @@ struct flags {
     uint32_t data_adc_collect :1;
     uint32_t adc_start        :1;
 };
+
+extern volatile uint32_t start_req;
+extern volatile uint32_t number_periods;
+extern volatile uint32_t BUFF_ADC1_2[SIZE_BUFFER_ADC];
 
 void Error_Handler(void);
 
