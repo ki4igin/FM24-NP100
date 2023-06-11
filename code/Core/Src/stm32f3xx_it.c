@@ -5,7 +5,7 @@ extern UART_HandleTypeDef huart1;
 
 extern volatile uint16_t count_dma_period;
 extern volatile uint8_t count_dac_period;
-extern volatile uint8_t period_number_dac;
+extern volatile uint8_t number_periods;
 extern volatile uint32_t BUFF_ADC1_2[SIZE_BUFFER_ADC];
 extern volatile uint8_t firstByteWait;
 extern uint8_t uart_buf[UART_RX_NBUF];
@@ -105,13 +105,6 @@ void SysTick_Handler(void)
 /******************************************************************************/
 void USART1_IRQHandler(void)
 {
-    // if (__HAL_UART_GET_FLAG(&huart1, UART_FLAG_RXNE)) {
-    //     count_rx++;
-    //     if (firstByteWait == 1) {
-    //         CLEAR_REG(TIM3->CNT);
-    //         firstByteWait = 0;
-    //     }
-    // }
     HAL_UART_IRQHandler(&huart1);
 }
 
@@ -139,7 +132,7 @@ void DMA1_Channel1_IRQHandler(void)
         }
 
     } else if (READ_BIT(DMA1->ISR, DMA_ISR_TCIF1)) {
-        SET_BIT(DMA1->IFCR, DMA_IFCR_CTCIF1_Msk);
+        SET_BIT(DMA1->IFCR, DMA_IFCR_CTCIF1);
 
         for (uint32_t i = SIZE_BUFFER_ADC / 2; i < SIZE_BUFFER_ADC; i++) {
             message_ADC12.BUFF[i + temp_size] = BUFF_ADC1_2[i];
@@ -150,9 +143,9 @@ void DMA1_Channel1_IRQHandler(void)
             count_dma_period++;
         }
 
-        if (count_dma_period == period_number_dac * ADC_PER_DAC) {
-            CLEAR_BIT(TIM2->CR1, TIM_CR1_CEN_Msk);
-            CLEAR_BIT(TIM4->CR1, TIM_CR1_CEN_Msk);
+        if (count_dma_period == number_periods * ADC_PER_DAC) {
+            CLEAR_BIT(TIM2->CR1, TIM_CR1_CEN);
+            CLEAR_BIT(TIM4->CR1, TIM_CR1_CEN);
             flags.data_adc_collect = 1;
         }
         HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13); // TEST period PIN

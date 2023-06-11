@@ -418,6 +418,11 @@
               <FileType>1</FileType>
               <FilePath>../code/Core/Src/my_functions.c</FilePath>
             </File>
+            <File>
+              <FileName>ramp.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\code\Core\Src\ramp.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -549,5 +554,14 @@
     </components>
     <files/>
   </RTE>
+
+  <LayerInfo>
+    <Layers>
+      <Layer>
+        <LayName>FM24-NP100</LayName>
+        <LayPrjMark>1</LayPrjMark>
+      </Layer>
+    </Layers>
+  </LayerInfo>
 
 </Project>

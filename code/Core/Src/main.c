@@ -6,7 +6,7 @@ volatile uint32_t BUFF_ADC1_2[SIZE_BUFFER_ADC] = {0};
 
 volatile uint16_t count_dma_period = 0;
 volatile uint8_t count_dac_period = 0;
-volatile uint8_t period_number_dac = 0;
+volatile uint8_t number_periods = 0;
 
 uint8_t uart_buf[UART_RX_NBUF];
 
@@ -19,7 +19,7 @@ volatile uint32_t uart_is_new_cmd = 0;
 
 struct flags flags = {0};
 
-static void cmd_work(void);
+static void cmd_work(struct uart_cmd);
 static void uart_send_test_cmd(UART_HandleTypeDef *huart);
 static void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
@@ -59,15 +59,16 @@ int main(void)
     while (1) {
         if (uart_is_new_cmd) {
             uart_is_new_cmd = 0;
-            cmd_work();
+            cmd_work(uart_cmd);
         }
     }
 }
 
-static void cmd_work(void)
+static void cmd_work(struct uart_cmd cmd)
 {
-    switch (uart_cmd.id) {
+    switch (cmd.id) {
     case COMMAND_START:
+        number_periods = cmd.arg;
         Enable_DAC_ADC(flags);
         Collect_ADC_Complete(flags);
         break;
@@ -78,10 +79,10 @@ static void cmd_work(void)
         uart_send_test_cmd(&huart1);
         break;
     case COMMAND_RAMP:
-        ramp_change_type(uart_cmd.arg);
+        ramp_change_type(cmd.arg);
         break;
     case COMMAND_AMP:
-        ramp_change_amp(uart_cmd.arg);
+        ramp_change_amp(cmd.arg);
         break;
     default:
         break;
