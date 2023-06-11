@@ -7,18 +7,15 @@ extern "C" {
 
 #include "stm32f3xx_hal.h"
 
-#define SYS_CLOCK         72000000 // 72MHz
 #define DAC_AMP_CODE_INIT 200
-#define SIZE_BUFFER_ADC   128
+
 #define UART_RX_NBUF      4
-#define TIM2_ARR          500                   // for DAC
-#define TIM4_ARR          125                   // for ADC
-#define ADC_PER_DAC       (TIM2_ARR / TIM4_ARR) // ADC_PERIODS_PER_DAC_PERIOD
-// #define FREQ_DAC           SYS_CLOCK/TIM2_ARR
-// #define FREQ_ADC           SYS_CLOCK/TIM4_ARR
-#define MAX_DAC_PERIODS 4
-#define MAX_ADC_PERIODS (MAX_DAC_PERIODS * ADC_PER_DAC)
-#define UART_BAUD_RATE  115200
+
+#define TIM2_ARR          500 // for DAC
+#define TIM4_ARR          125 // for ADC
+
+#define ADC_BUF_LEN_MAX   8192
+#define UART_BAUD_RATE    115200
 
 enum __attribute__((packed)) command {
     COMMAND_START = 1,
@@ -26,17 +23,26 @@ enum __attribute__((packed)) command {
     COMMAND_RESET = 3,
     COMMAND_TEST = 4,
     COMMAND_RAMP = 5,
-    COMMAND_AMP = 6
+    COMMAND_AMP = 6,
+    COMMAND_DF = 7,
+    COMMAND_FD = 8,
+    COMMAND_FM = 9,
 };
 
-struct message_ADC {
+struct pac_adc {
     struct preamble {
-        uint8_t id;
-        uint8_t number_periods;
-        uint16_t size;
+        uint32_t id   :8;
+        uint32_t size :24;
     } preamble;
 
-    uint32_t BUFF[SIZE_BUFFER_ADC * MAX_ADC_PERIODS];
+    union {
+        struct {
+            uint16_t adc1;
+            uint16_t adc2;
+        };
+
+        uint32_t adc12;
+    } data[ADC_BUF_LEN_MAX];
 };
 
 struct flags {
@@ -45,11 +51,8 @@ struct flags {
     uint32_t start_req        :1;
 };
 
-extern volatile uint32_t number_periods;
-extern volatile uint32_t count_dma_period;
-extern volatile uint32_t count_periods;
-extern volatile uint32_t BUFF_ADC1_2[SIZE_BUFFER_ADC];
-extern struct message_ADC message_ADC12;
+extern uint32_t number_samples;
+extern struct pac_adc pac_adc;
 extern UART_HandleTypeDef huart1;
 extern volatile struct flags flags;
 

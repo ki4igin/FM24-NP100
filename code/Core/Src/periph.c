@@ -86,9 +86,8 @@ void ADC1_2_Dual_Init(void)
      * memory data size 32b (word)
      */
     MODIFY_REG(DMA1_Channel1->CPAR, DMA_CPAR_PA, (uint32_t)(&ADC12_COMMON->CDR));
-    MODIFY_REG(DMA1_Channel1->CMAR, DMA_CMAR_MA, (uint32_t)(BUFF_ADC1_2));
+    MODIFY_REG(DMA1_Channel1->CMAR, DMA_CMAR_MA, (uint32_t)(pac_adc.data));
     SET_BIT(DMA1_Channel1->CCR, DMA_CCR_TCIE);
-    SET_BIT(DMA1_Channel1->CCR, DMA_CCR_HTIE);
     CLEAR_BIT(DMA1_Channel1->CCR, DMA_CCR_DIR);
     SET_BIT(DMA1_Channel1->CCR, DMA_CCR_CIRC);
     CLEAR_BIT(DMA1_Channel1->CCR, (1 << DMA_CCR_PL_Pos));
@@ -96,7 +95,7 @@ void ADC1_2_Dual_Init(void)
     CLEAR_BIT(DMA1_Channel1->CCR, DMA_CCR_PINC);
     SET_BIT(DMA1_Channel1->CCR, (2 << DMA_CCR_PSIZE_Pos));
     SET_BIT(DMA1_Channel1->CCR, (2 << DMA_CCR_MSIZE_Pos));
-    SET_BIT(DMA1_Channel1->CNDTR, (SIZE_BUFFER_ADC << DMA_CNDTR_NDT_Pos));
+    SET_BIT(DMA1_Channel1->CNDTR, (ADC_BUF_LEN_MAX << DMA_CNDTR_NDT_Pos));
     SET_BIT(DMA1_Channel1->CCR, DMA_CCR_EN);
     NVIC_SetPriority(DMA1_Channel1_IRQn, 1);
     NVIC_EnableIRQ(DMA1_Channel1_IRQn);
@@ -171,7 +170,7 @@ void TIM4_Init(void)
     CLEAR_REG(TIM4->CR1);
     MODIFY_REG(TIM4->CR2, TIM_CR2_MMS, 2 << TIM_CR2_MMS_Pos);
     WRITE_REG(TIM4->PSC, 0);
-    WRITE_REG(TIM4->ARR, TIM4_ARR - 1);   
+    WRITE_REG(TIM4->ARR, TIM4_ARR - 1);
 }
 
 /******************************************************************************/
@@ -218,4 +217,3 @@ void TIM3_Init(void)
     NVIC_SetPriority(TIM3_IRQn, 4);
     NVIC_EnableIRQ(TIM3_IRQn);
 }
-

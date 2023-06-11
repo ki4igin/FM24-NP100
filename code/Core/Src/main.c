@@ -4,11 +4,7 @@
 
 UART_HandleTypeDef huart1;
 
-volatile uint32_t BUFF_ADC1_2[SIZE_BUFFER_ADC] = {0};
-
-volatile uint32_t count_dma_period = 0;
-volatile uint32_t count_periods = 0;
-volatile uint32_t number_periods = 0;
+uint32_t number_samples = 128;
 
 uint8_t uart_buf[UART_RX_NBUF];
 
@@ -17,7 +13,7 @@ static struct cmd {
     uint32_t arg    :24;
 } cmd;
 
-struct message_ADC message_ADC12 = {
+struct pac_adc pac_adc = {
     .preamble.id = 0x01,
 };
 
@@ -95,7 +91,12 @@ static void cmd_work(struct cmd cmd)
 static void start(uint32_t arg)
 {
     if (READ_BIT(TIM4->CR1, TIM_CR1_CEN) == 0) {
-        number_periods = arg;
+        if ((arg == 0) || (arg > ADC_BUF_LEN_MAX)) {
+            return;
+        }
+
+        number_samples = arg;
+        pac_adc.preamble.size = number_samples * sizeof(uint32_t);
         flags.start_req = 1;
     }
 }
@@ -132,12 +133,12 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 
 static void Collect_ADC_Complete(void)
 {
-    message_ADC12.preamble.number_periods = number_periods;
-    message_ADC12.preamble.size = SIZE_BUFFER_ADC * count_dma_period * sizeof(uint32_t);
+    // pac_adc.preamble.number_samples = number_samples;
+    // pac_adc.preamble.size = SIZE_BUFFER_ADC * count_dma_period * sizeof(uint32_t);
     HAL_UART_Transmit_IT(
         &huart1,
-        (uint8_t *)&message_ADC12,
-        sizeof(message_ADC12.preamble) + message_ADC12.preamble.size);
+        (uint8_t *)&pac_adc,
+        sizeof(pac_adc.preamble) + pac_adc.preamble.size);
 }
 
 /**

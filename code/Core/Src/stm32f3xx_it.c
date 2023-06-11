@@ -109,26 +109,10 @@ void USART1_IRQHandler(void)
 // for ADC1_2 (dual)
 void DMA1_Channel1_IRQHandler(void)
 {
-    static uint32_t temp_size = 0;
-
-    temp_size = SIZE_BUFFER_ADC * count_dma_period;
-
-    if (READ_BIT(DMA1->ISR, DMA_ISR_HTIF1)) {
-        SET_BIT(DMA1->IFCR, DMA_IFCR_CHTIF1);
-
-        for (uint32_t i = 0; i < SIZE_BUFFER_ADC / 2; i++) {
-            message_ADC12.BUFF[i + temp_size] = BUFF_ADC1_2[i];
-        }
-
-    } else if (READ_BIT(DMA1->ISR, DMA_ISR_TCIF1)) {
+    if (READ_BIT(DMA1->ISR, DMA_ISR_TCIF1)) {
         SET_BIT(DMA1->IFCR, DMA_IFCR_CTCIF1);
-
-        for (uint32_t i = SIZE_BUFFER_ADC / 2; i < SIZE_BUFFER_ADC; i++) {
-            message_ADC12.BUFF[i + temp_size] = BUFF_ADC1_2[i];
-        }
-
-        count_dma_period++;
-
+        adc_stop();
+        flags.data_adc_collect = 1;
         HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13); // TEST period PIN
     }
 }
@@ -151,18 +135,9 @@ void DMA2_Channel3_IRQHandler(void)
         HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_15);
         SET_BIT(DMA2->IFCR, DMA_IFCR_CGIF3);
 
-        if (READ_BIT(TIM4->CR1, TIM_CR1_CEN)) {
-            if (++count_periods >= number_periods) {
-                adc_stop();
-                count_periods = 0;                
-                flags.data_adc_collect = 1;
-            }
-        }
-
         if (flags.start_req) {
-            count_dma_period = 0;
             flags.start_req = 0;
-            adc_start();
+            adc_start(number_samples);
         }
     }
 }

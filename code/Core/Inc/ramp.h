@@ -4,7 +4,7 @@
 #include "stdint.h"
 #include "main.h"
 
-#define RAMP_BUF_SIZE 128
+#define RAMP_BUF_SIZE (128 * 2)
 
 enum ramp_type {
     RAMP_TYPE_SYM = 1,
