@@ -313,7 +313,7 @@
           </ArmAdsMisc>
           <Cads>
             <interw>1</interw>
-            <Optim>1</Optim>
+            <Optim>2</Optim>
             <oTime>0</oTime>
             <SplitLS>0</SplitLS>
             <OneElfS>1</OneElfS>
@@ -409,19 +409,19 @@
               <FilePath>../code/Core/Src/stm32f3xx_hal_msp.c</FilePath>
             </File>
             <File>
-              <FileName>CMSIS_my.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>../code/Core/Src/CMSIS_my.c</FilePath>
-            </File>
-            <File>
-              <FileName>my_functions.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>../code/Core/Src/my_functions.c</FilePath>
-            </File>
-            <File>
               <FileName>ramp.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\code\Core\Src\ramp.c</FilePath>
+            </File>
+            <File>
+              <FileName>opamp.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\code\Core\Src\opamp.c</FilePath>
+            </File>
+            <File>
+              <FileName>periph.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\code\Core\Src\periph.c</FilePath>
             </File>
           </Files>
         </Group>

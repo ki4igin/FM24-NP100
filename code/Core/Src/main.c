@@ -1,34 +1,34 @@
 #include "ramp.h"
+#include "opamp.h"
+#include "periph.h"
 
 UART_HandleTypeDef huart1;
 
 volatile uint32_t BUFF_ADC1_2[SIZE_BUFFER_ADC] = {0};
 
-volatile uint16_t count_dma_period = 0;
-volatile uint8_t count_periods = 0;
+volatile uint32_t count_dma_period = 0;
+volatile uint32_t count_periods = 0;
 volatile uint32_t number_periods = 0;
 
 uint8_t uart_buf[UART_RX_NBUF];
 
-static volatile struct uart_cmd {
-    enum command id;
-    uint32_t arg :24;
-} uart_cmd;
+static struct cmd {
+    enum command id :8;
+    uint32_t arg    :24;
+} cmd;
 
-volatile uint32_t uart_is_new_cmd = 0;
-
-volatile uint32_t start_req = 0;
+struct message_ADC message_ADC12 = {
+    .preamble.id = 0x01,
+};
 
 volatile struct flags flags = {0};
 
-static void cmd_work(struct uart_cmd);
+static void cmd_work(struct cmd);
 static void uart_send_test_cmd(UART_HandleTypeDef *huart);
+static void start(uint32_t arg);
+static void Collect_ADC_Complete(void);
 static void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-static void MX_OPAMP1_Init(void);
-static void MX_OPAMP2_Init(void);
-static void MX_OPAMP3_Init(void);
-static void MX_OPAMP4_Init(void);
 static void MX_USART1_UART_Init(void);
 
 int main(void)
@@ -42,26 +42,25 @@ int main(void)
     MX_OPAMP3_Init();
     MX_USART1_UART_Init();
 
-    Opamp_Enable(OPAMP1);
-    Opamp_Enable(OPAMP2);
-    Opamp_Enable(OPAMP3);
-    Opamp_Enable(OPAMP4);
+    opamp_enable(OPAMP1);
+    opamp_enable(OPAMP2);
+    opamp_enable(OPAMP3);
+    opamp_enable(OPAMP4);
 
     ADC1_2_Dual_Init();
     DAC1_Init();
     TIM2_Init();
     TIM4_Init();
-    ramp_make(200, RAMP_TYPE_NONSYM);
-    SET_BIT(TIM2->CR1, TIM_CR1_CEN);
+    ramp_make(DAC_AMP_CODE_INIT, RAMP_TYPE_NONSYM);
+    dac_start();
 
     uart_send_test_cmd(&huart1);
-
     HAL_UART_Receive_IT(&huart1, uart_buf, UART_RX_NBUF);
 
     while (1) {
-        if (uart_is_new_cmd) {
-            uart_is_new_cmd = 0;
-            cmd_work(uart_cmd);
+        if (flags.is_new_cmd) {
+            flags.is_new_cmd = 0;
+            cmd_work(cmd);
         }
         if (flags.data_adc_collect) {
             flags.data_adc_collect = 0;
@@ -70,12 +69,11 @@ int main(void)
     }
 }
 
-static void cmd_work(struct uart_cmd cmd)
+static void cmd_work(struct cmd cmd)
 {
     switch (cmd.id) {
     case COMMAND_START:
-        number_periods = cmd.arg;
-        Enable_DAC_ADC();
+        start(cmd.arg);
         break;
     case COMMAND_RESET:
         HAL_NVIC_SystemReset();
@@ -94,9 +92,17 @@ static void cmd_work(struct uart_cmd cmd)
     }
 }
 
+static void start(uint32_t arg)
+{
+    if (READ_BIT(TIM4->CR1, TIM_CR1_CEN) == 0) {
+        number_periods = arg;
+        flags.start_req = 1;
+    }
+}
+
 static void uart_send_test_cmd(UART_HandleTypeDef *huart)
 {
-    struct uart_cmd cmd = {
+    struct cmd cmd = {
         .id = COMMAND_TEST,
         .arg = 0x112233};
 
@@ -106,8 +112,8 @@ static void uart_send_test_cmd(UART_HandleTypeDef *huart)
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
     if (huart == &huart1) {
-        uart_cmd = *(struct uart_cmd *)uart_buf;
-        uart_is_new_cmd = 1;
+        cmd = *(struct cmd *)uart_buf;
+        flags.is_new_cmd = 1;
     }
 }
 
@@ -122,6 +128,16 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
     if (huart == &huart1) {
         HAL_UART_Receive_IT(&huart1, uart_buf, UART_RX_NBUF);
     }
+}
+
+static void Collect_ADC_Complete(void)
+{
+    message_ADC12.preamble.number_periods = number_periods;
+    message_ADC12.preamble.size = SIZE_BUFFER_ADC * count_dma_period * sizeof(uint32_t);
+    HAL_UART_Transmit_IT(
+        &huart1,
+        (uint8_t *)&message_ADC12,
+        sizeof(message_ADC12.preamble) + message_ADC12.preamble.size);
 }
 
 /**
@@ -168,84 +184,6 @@ static void SystemClock_Config(void)
 }
 
 /**
- * @brief OPAMP1 Initialization Function
- * @param None
- * @retval None
- */
-static void MX_OPAMP1_Init(void)
-{
-    static OPAMP_HandleTypeDef hopamp;
-
-    hopamp.Instance = OPAMP1;
-    hopamp.Init.Mode = OPAMP_STANDALONE_MODE;
-    hopamp.Init.NonInvertingInput = OPAMP_NONINVERTINGINPUT_IO0;
-    hopamp.Init.InvertingInput = OPAMP_INVERTINGINPUT_IO1;
-    hopamp.Init.TimerControlledMuxmode = OPAMP_TIMERCONTROLLEDMUXMODE_DISABLE;
-    hopamp.Init.UserTrimming = OPAMP_TRIMMING_FACTORY;
-    if (HAL_OPAMP_Init(&hopamp) != HAL_OK) {
-        Error_Handler();
-    }
-}
-
-/**
- * @brief OPAMP2 Initialization Function
- * @param None
- * @retval None
- */
-static void MX_OPAMP2_Init(void)
-{
-    static OPAMP_HandleTypeDef hopamp;
-
-    hopamp.Instance = OPAMP2;
-    hopamp.Init.Mode = OPAMP_STANDALONE_MODE;
-    hopamp.Init.NonInvertingInput = OPAMP_NONINVERTINGINPUT_IO0;
-    hopamp.Init.InvertingInput = OPAMP_INVERTINGINPUT_IO1;
-    hopamp.Init.TimerControlledMuxmode = OPAMP_TIMERCONTROLLEDMUXMODE_DISABLE;
-    hopamp.Init.UserTrimming = OPAMP_TRIMMING_FACTORY;
-    if (HAL_OPAMP_Init(&hopamp) != HAL_OK) {
-        Error_Handler();
-    }
-}
-
-/**
- * @brief OPAMP3 Initialization Function
- * @param None
- * @retval None
- */
-static void MX_OPAMP3_Init(void)
-{
-    static OPAMP_HandleTypeDef hopamp;
-
-    hopamp.Instance = OPAMP3;
-    hopamp.Init.Mode = OPAMP_FOLLOWER_MODE;
-    hopamp.Init.NonInvertingInput = OPAMP_NONINVERTINGINPUT_IO0;
-    hopamp.Init.TimerControlledMuxmode = OPAMP_TIMERCONTROLLEDMUXMODE_DISABLE;
-    hopamp.Init.UserTrimming = OPAMP_TRIMMING_FACTORY;
-    if (HAL_OPAMP_Init(&hopamp) != HAL_OK) {
-        Error_Handler();
-    }
-}
-
-/**
- * @brief OPAMP4 Initialization Function
- * @param None
- * @retval None
- */
-static void MX_OPAMP4_Init(void)
-{
-    static OPAMP_HandleTypeDef hopamp;
-
-    hopamp.Instance = OPAMP4;
-    hopamp.Init.Mode = OPAMP_FOLLOWER_MODE;
-    hopamp.Init.NonInvertingInput = OPAMP_NONINVERTINGINPUT_IO3;
-    hopamp.Init.TimerControlledMuxmode = OPAMP_TIMERCONTROLLEDMUXMODE_DISABLE;
-    hopamp.Init.UserTrimming = OPAMP_TRIMMING_FACTORY;
-    if (HAL_OPAMP_Init(&hopamp) != HAL_OK) {
-        Error_Handler();
-    }
-}
-
-/**
  * @brief USART1 Initialization Function
  * @param None
  * @retval None
@@ -268,7 +206,8 @@ static void MX_USART1_UART_Init(void)
         Error_Handler();
     }
 
-    HAL_UART_ReceiverTimeout_Config(&huart1, 20);
+    // Максимальное время между байтами 200 битовых знаков
+    HAL_UART_ReceiverTimeout_Config(&huart1, 200);
     HAL_UART_EnableReceiverTimeout(&huart1);
 }
 

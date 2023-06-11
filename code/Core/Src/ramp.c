@@ -1,6 +1,8 @@
 #include "ramp.h"
 #include "main.h"
 
+typedef uint32_t q32_8;
+
 uint16_t ramp_buf[RAMP_BUF_SIZE];
 
 static uint32_t ramp_amp_code = 200;
@@ -10,8 +12,6 @@ static void make_ramp_nonsym(uint32_t amp_code)
 {
     // Используются 8 знаков после запятой (двоичной),
     // максимальное возможное значение 1048386 (укладывается в 32 бита)
-    typedef uint32_t q32_8;
-
     q32_8 amp = amp_code << 8;
     q32_8 half_dac_range = 2048 << 8;
     q32_8 start_val = half_dac_range - amp / 2;
@@ -28,8 +28,6 @@ static void make_ramp_sym(uint32_t amp_code)
 {
     // Используются 8 знаков после запятой (двоичной),
     // максимальное возможное значение 1048448 (укладывается в 32 бита)
-    typedef uint32_t q32_8;
-
     q32_8 amp = amp_code << 8;
     q32_8 half_dac_range = 2048 << 8;
     q32_8 start_val = half_dac_range - amp / 2;

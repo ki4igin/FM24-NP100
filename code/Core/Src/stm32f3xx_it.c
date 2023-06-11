@@ -1,18 +1,6 @@
 #include "main.h"
 #include "stm32f3xx_it.h"
-
-extern UART_HandleTypeDef huart1;
-
-extern volatile uint16_t count_dma_period;
-extern volatile uint8_t count_periods;
-extern volatile uint32_t BUFF_ADC1_2[SIZE_BUFFER_ADC];
-extern volatile uint8_t firstByteWait;
-extern uint8_t uart_buf[UART_RX_NBUF];
-extern volatile struct flags flags;
-
-struct message_ADC message_ADC12;
-
-static uint32_t temp_size = 0;
+#include "periph.h"
 
 /******************************************************************************/
 /*           Cortex-M4 Processor Interruption and Exception Handlers          */
@@ -121,6 +109,8 @@ void USART1_IRQHandler(void)
 // for ADC1_2 (dual)
 void DMA1_Channel1_IRQHandler(void)
 {
+    static uint32_t temp_size = 0;
+
     temp_size = SIZE_BUFFER_ADC * count_dma_period;
 
     if (READ_BIT(DMA1->ISR, DMA_ISR_HTIF1)) {
@@ -163,16 +153,16 @@ void DMA2_Channel3_IRQHandler(void)
 
         if (READ_BIT(TIM4->CR1, TIM_CR1_CEN)) {
             if (++count_periods >= number_periods) {
-                count_periods = 0;
-                CLEAR_BIT(TIM4->CR1, TIM_CR1_CEN);
+                adc_stop();
+                count_periods = 0;                
                 flags.data_adc_collect = 1;
             }
         }
 
-        if (start_req) {
+        if (flags.start_req) {
             count_dma_period = 0;
-            start_req = 0;
-            SET_BIT(TIM4->CR1, TIM_CR1_CEN);
+            flags.start_req = 0;
+            adc_start();
         }
     }
 }

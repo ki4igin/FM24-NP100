@@ -171,8 +171,7 @@ void TIM4_Init(void)
     CLEAR_REG(TIM4->CR1);
     MODIFY_REG(TIM4->CR2, TIM_CR2_MMS, 2 << TIM_CR2_MMS_Pos);
     WRITE_REG(TIM4->PSC, 0);
-    WRITE_REG(TIM4->ARR, TIM4_ARR - 1);
-    SET_BIT(TIM4->EGR, TIM_EGR_UG);
+    WRITE_REG(TIM4->ARR, TIM4_ARR - 1);   
 }
 
 /******************************************************************************/
@@ -220,13 +219,3 @@ void TIM3_Init(void)
     NVIC_EnableIRQ(TIM3_IRQn);
 }
 
-/******************************************************************************/
-/* Function Name : Opamp_Enable */
-/* Description : Starts the specified operational amplifier. */
-/* Parameters : opamp: Pointer to the operational amplifier instance */
-/* Return : None */
-/******************************************************************************/
-void Opamp_Enable(OPAMP_TypeDef *opamp)
-{
-    SET_BIT(opamp->CSR, OPAMP_CSR_OPAMPxEN);
-}
