@@ -48,6 +48,9 @@ int main(void)
     TIM2_Init();
     TIM4_Init();
     ramp_make(DAC_AMP_CODE_INIT, RAMP_TYPE_NONSYM);
+
+    adc_change_fd(FREQ_500K);
+    dac_change_fm(FREQ_30H517578125);
     dac_start();
 
     uart_send_test_cmd(&huart1);
@@ -82,6 +85,12 @@ static void cmd_work(struct cmd cmd)
         break;
     case COMMAND_AMP:
         ramp_change_amp(cmd.arg);
+        break;
+    case COMMAND_FD:
+        adc_change_fd(cmd.arg);
+        break;
+    case COMMAND_FM:
+        dac_change_fm(cmd.arg);
         break;
     default:
         break;

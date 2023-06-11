@@ -170,7 +170,6 @@ void TIM4_Init(void)
     CLEAR_REG(TIM4->CR1);
     MODIFY_REG(TIM4->CR2, TIM_CR2_MMS, 2 << TIM_CR2_MMS_Pos);
     WRITE_REG(TIM4->PSC, 0);
-    WRITE_REG(TIM4->ARR, TIM4_ARR - 1);
 }
 
 /******************************************************************************/
@@ -188,7 +187,4 @@ void TIM2_Init(void)
     CLEAR_REG(TIM2->CR1);
     MODIFY_REG(TIM2->CR2, TIM_CR2_MMS, 2 << TIM_CR2_MMS_Pos);
     WRITE_REG(TIM2->PSC, 0);
-    WRITE_REG(TIM2->ARR, TIM2_ARR - 1);
-    SET_BIT(TIM2->EGR, TIM_EGR_UG);
-    CLEAR_BIT(TIM2->SR, TIM_SR_UIF);
 }

@@ -8,11 +8,9 @@ extern "C" {
 #include "stm32f3xx_hal.h"
 
 #define DAC_AMP_CODE_INIT 200
-
+#define SYSTEM_CORE_CLOCK 72000000
+#define ADC_DAC_MAX_FREQ  2000000
 #define UART_RX_NBUF      4
-
-#define TIM2_ARR          500 // for DAC
-#define TIM4_ARR          125 // for ADC
 
 #define ADC_BUF_LEN_MAX   8192
 #define UART_BAUD_RATE    115200
@@ -25,8 +23,9 @@ enum __attribute__((packed)) command {
     COMMAND_RAMP = 5,
     COMMAND_AMP = 6,
     COMMAND_DF = 7,
-    COMMAND_FD = 8,
-    COMMAND_FM = 9,
+    COMMAND_DF_VS_U = 8,
+    COMMAND_FD = 9,
+    COMMAND_FM = 10,
 };
 
 struct pac_adc {
