@@ -136,4 +136,5 @@ void DMA2_Channel3_IRQHandler(void)
             flags.start_req = 0;
             ADC12_Dual_Start(adc_number_samples);
         }
+    }
 }
