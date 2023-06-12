@@ -8,7 +8,7 @@ uint16_t ramp_buf[RAMP_BUF_SIZE];
 static uint32_t ramp_amp_code = 200;
 static enum ramp_type ramp_type = RAMP_TYPE_SYM;
 
-static void make_ramp_nonsym(uint32_t amp_code)
+static void Ramp_Make_NonSym(uint32_t amp_code)
 {
     // Используются 8 знаков после запятой (двоичной),
     // максимальное возможное значение 1048386 (укладывается в 32 бита)
@@ -24,7 +24,7 @@ static void make_ramp_nonsym(uint32_t amp_code)
     }
 }
 
-static void make_ramp_sym(uint32_t amp_code)
+static void Ramp_Make_Sym(uint32_t amp_code)
 {
     // Используются 8 знаков после запятой (двоичной),
     // максимальное возможное значение 1048448 (укладывается в 32 бита)
@@ -45,33 +45,33 @@ static void make_ramp_sym(uint32_t amp_code)
 /**
 @brief Generates a ramp waveform based on the specified parameters.
 @param ramp: Type of ramp waveform (COMMAND_RAMP1 or COMMAND_RAMP2)
-@param ampl: Amplitude of the ramp waveform
+@param amp: Amplitude of the ramp waveform
 @retval None
 @note This function generates a ramp waveform based on the specified parameters.
 */
-void ramp_make(uint32_t amp_code, enum ramp_type type)
+void Ramp_Make(uint32_t amp_code, enum ramp_type type)
 {
     ramp_amp_code = amp_code < 4095 ? amp_code : 4095;
     ramp_type = type;
 
     switch (ramp_type) {
     case RAMP_TYPE_NONSYM:
-        make_ramp_nonsym(ramp_amp_code);
+        Ramp_Make_NonSym(ramp_amp_code);
         break;
     case RAMP_TYPE_SYM:
-        make_ramp_sym(ramp_amp_code);
+        Ramp_Make_Sym(ramp_amp_code);
         break;
     default:
         break;
     }
 }
 
-void ramp_change_type(enum ramp_type type)
+void Ramp_Change_Type(enum ramp_type type)
 {
-    ramp_make(ramp_amp_code, type);
+    Ramp_Make(ramp_amp_code, type);
 }
 
-void ramp_change_amp(uint32_t amp_code)
+void Ramp_Change_Amp(uint32_t amp_code)
 {
-    ramp_make(amp_code, ramp_type);
+    Ramp_Make(amp_code, ramp_type);
 }

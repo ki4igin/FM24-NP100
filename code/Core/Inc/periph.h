@@ -4,6 +4,8 @@
 #include "stm32f3xx.h"
 #include "ramp.h"
 
+#define ADC_DAC_MAX_FREQ  2000000
+
 enum freq {
     FREQ_2M = 0,
     FREQ_1M,
@@ -25,15 +27,15 @@ enum freq {
     FREQ_15H2587890625,
 };
 
-void ADC1_2_Dual_Init(void);
+void ADC12_Dual_Init(void);
 void TIM2_Init(void);
 void TIM4_Init(void);
 void DAC1_Init(void);
 
-inline static uint32_t freq2timarr(enum freq freq)
+inline static uint32_t Freq_To_TimArr(enum freq freq)
 {
-    uint32_t max_timarr = (SYSTEM_CORE_CLOCK / ADC_DAC_MAX_FREQ);
-    return max_timarr * (1 << freq);
+    uint32_t max_tim_arr = (SYSTEM_CORE_CLOCK / ADC_DAC_MAX_FREQ);
+    return max_tim_arr * (1 << freq);
 }
 
 inline static void TIM_Change_ARR(TIM_TypeDef *TIMx, uint32_t arr)
@@ -41,7 +43,7 @@ inline static void TIM_Change_ARR(TIM_TypeDef *TIMx, uint32_t arr)
     WRITE_REG(TIMx->ARR, arr);
 }
 
-inline static void ADC1_2_Dual_Change_Len(uint32_t len)
+inline static void ADC12_Dual_Change_Len(uint32_t len)
 {
     // перед изменением длины посылки DMA, его нужно выключить
     uint32_t dma_ccr_en = READ_BIT(DMA1_Channel1->CCR, DMA_CCR_EN);
@@ -53,41 +55,41 @@ inline static void ADC1_2_Dual_Change_Len(uint32_t len)
 }
 
 // ADC стартует по переполнению таймера TIM4
-inline static void adc_start(uint32_t len)
+inline static void ADC12_Dual_Start(uint32_t len)
 {
-    ADC1_2_Dual_Change_Len(len);
+    ADC12_Dual_Change_Len(len);
     SET_BIT(TIM4->EGR, TIM_EGR_UG);
     SET_BIT(TIM4->CR1, TIM_CR1_CEN);
 }
 
-inline static void adc_stop(void)
+inline static void ADC12_Dual_Stop(void)
 {
     CLEAR_BIT(TIM4->CR1, TIM_CR1_CEN);
 }
 
-inline static void adc_change_fd(enum freq fd)
+inline static void ADC12_Dual_Change_Fd(enum freq fd)
 {
     if (fd > FREQ_125K) {
         return;
     }
 
-    uint32_t arr = freq2timarr(fd);
+    uint32_t arr = Freq_To_TimArr(fd);
     TIM_Change_ARR(TIM4, arr);
 }
 
 // DAC стартует по переполнению таймера TIM2
-inline static void dac_start(void)
+inline static void DAC1_Start(void)
 {
     SET_BIT(TIM2->EGR, TIM_EGR_UG);
     SET_BIT(TIM2->CR1, TIM_CR1_CEN);
 }
 
-inline static void dac_stop(void)
+inline static void DAC1_Stop(void)
 {
     CLEAR_BIT(TIM2->CR1, TIM_CR1_CEN);
 }
 
-inline static void dac_change_fm(enum freq fm)
+inline static void DAC1_Change_Fm(enum freq fm)
 {
     if ((fm < FREQ_3906H25) || (fm > FREQ_15H2587890625)) {
         return;
@@ -96,7 +98,7 @@ inline static void dac_change_fm(enum freq fm)
     // (32 - __CLZ(RAMP_BUF_SIZE) - 1) эквивалентно log2(RAMP_BUF_SIZE)
     enum freq dac_fd = fm - (32 - __CLZ(RAMP_BUF_SIZE) - 1);
 
-    uint32_t arr = freq2timarr(dac_fd);
+    uint32_t arr = Freq_To_TimArr(dac_fd);
     TIM_Change_ARR(TIM2, arr);
 }
 

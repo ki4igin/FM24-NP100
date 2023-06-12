@@ -2,14 +2,14 @@
 #include "ramp.h"
 
 /******************************************************************************/
-/* Function Name : ADC1_2_Dual_Init */
+/* Function Name : ADC12_Dual_Init */
 /* Description : Initializes ADC1 and ADC2 in dual mode. Configures the */
 /* ADC settings, ADC channels, ADC triggers, DMA1 Channel 1, and interrupts. */
 /* Enables the ADCs and starts the conversions, but not start TIM4 */
 /* Parameters : None */
 /* Return : None */
 /******************************************************************************/
-void ADC1_2_Dual_Init(void)
+void ADC12_Dual_Init(void)
 {
     SET_BIT(RCC->AHBENR, RCC_AHBENR_ADC12EN);
     SET_BIT(RCC->AHBENR, RCC_AHBENR_DMA1EN);

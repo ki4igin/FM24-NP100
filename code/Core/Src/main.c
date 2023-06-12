@@ -4,7 +4,7 @@
 
 UART_HandleTypeDef huart1;
 
-uint32_t number_samples = ADC_BUF_LEN_MAX / 4;
+uint32_t adc_number_samples = ADC_BUF_LEN_MAX;
 
 uint8_t uart_buf[UART_RX_NBUF];
 
@@ -19,10 +19,10 @@ struct pac_adc pac_adc = {
 
 volatile struct flags flags = {0};
 
-static void cmd_work(struct cmd);
-static void uart_send_test_cmd(UART_HandleTypeDef *huart);
-static void start(uint32_t arg);
-static void Collect_ADC_Complete(void);
+static void Cmd_Work(struct cmd);
+static void UART_Send_Test(UART_HandleTypeDef *huart);
+static void ADC_Start_Collect(uint32_t number_samples);
+static void UART_Send_ADC_Data(void);
 static void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART1_UART_Init(void);
@@ -38,79 +38,80 @@ int main(void)
     MX_OPAMP3_Init();
     MX_USART1_UART_Init();
 
-    opamp_enable(OPAMP1);
-    opamp_enable(OPAMP2);
-    opamp_enable(OPAMP3);
-    opamp_enable(OPAMP4);
+    OPAMP_Enable(OPAMP1);
+    OPAMP_Enable(OPAMP2);
+    OPAMP_Enable(OPAMP3);
+    OPAMP_Enable(OPAMP4);
 
-    ADC1_2_Dual_Init();
+    ADC12_Dual_Init();
     DAC1_Init();
     TIM2_Init();
     TIM4_Init();
-    ramp_make(DAC_AMP_CODE_INIT, RAMP_TYPE_NONSYM);
 
-    adc_change_fd(FREQ_500K);
-    dac_change_fm(FREQ_30H517578125);
-    dac_start();
+    Ramp_Make(DAC_AMP_CODE_INIT, RAMP_TYPE_NONSYM);
 
-    uart_send_test_cmd(&huart1);
+    ADC12_Dual_Change_Fd(FREQ_500K);
+    DAC1_Change_Fm(FREQ_30H517578125);
+    DAC1_Start();
+
+    UART_Send_Test(&huart1);
     HAL_UART_Receive_IT(&huart1, uart_buf, UART_RX_NBUF);
 
     while (1) {
         if (flags.is_new_cmd) {
             flags.is_new_cmd = 0;
-            cmd_work(cmd);
+            Cmd_Work(cmd);
         }
-        if (flags.data_adc_collect) {
-            flags.data_adc_collect = 0;
-            Collect_ADC_Complete();
+        if (flags.adc_data_collect) {
+            flags.adc_data_collect = 0;
+            UART_Send_ADC_Data();
         }
     }
 }
 
-static void cmd_work(struct cmd cmd)
+static void Cmd_Work(struct cmd cmd)
 {
     switch (cmd.id) {
     case COMMAND_START:
-        start(cmd.arg);
+        ADC_Start_Collect(cmd.arg);
         break;
     case COMMAND_RESET:
         HAL_NVIC_SystemReset();
         break;
     case COMMAND_TEST:
-        uart_send_test_cmd(&huart1);
+        UART_Send_Test(&huart1);
         break;
     case COMMAND_RAMP:
-        ramp_change_type(cmd.arg);
+        Ramp_Change_Type(cmd.arg);
         break;
     case COMMAND_AMP:
-        ramp_change_amp(cmd.arg);
+        Ramp_Change_Amp(cmd.arg);
         break;
     case COMMAND_FD:
-        adc_change_fd(cmd.arg);
+        ADC12_Dual_Change_Fd(cmd.arg);
         break;
     case COMMAND_FM:
-        dac_change_fm(cmd.arg);
+        DAC1_Change_Fm(cmd.arg);
         break;
     default:
         break;
     }
 }
 
-static void start(uint32_t arg)
+static void ADC_Start_Collect(uint32_t number_samples)
 {
     if (READ_BIT(TIM4->CR1, TIM_CR1_CEN) == 0) {
-        if ((arg == 0) || (arg > ADC_BUF_LEN_MAX)) {
+        if ((number_samples == 0) || (number_samples > ADC_BUF_LEN_MAX)) {
             return;
         }
 
-        number_samples = arg;
-        pac_adc.preamble.size = number_samples * sizeof(uint32_t);
+        adc_number_samples = number_samples;
+        pac_adc.preamble.size = adc_number_samples * sizeof(uint32_t);
         flags.start_req = 1;
     }
 }
 
-static void uart_send_test_cmd(UART_HandleTypeDef *huart)
+static void UART_Send_Test(UART_HandleTypeDef *huart)
 {
     struct cmd cmd = {
         .id = COMMAND_TEST,
@@ -127,12 +128,6 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
     }
 }
 
-void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
-{
-    if (huart == &huart1) {
-    }
-}
-
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 {
     if (huart == &huart1) {
@@ -140,7 +135,7 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
     }
 }
 
-static void Collect_ADC_Complete(void)
+static void UART_Send_ADC_Data(void)
 {
     HAL_UART_Transmit_IT(
         &huart1,
@@ -150,6 +145,7 @@ static void Collect_ADC_Complete(void)
 
 /**
  * @brief System Clock Configuration
+ * System Core Clock = 72 MHz
  * @retval None
  */
 static void SystemClock_Config(void)
@@ -214,7 +210,7 @@ static void MX_USART1_UART_Init(void)
         Error_Handler();
     }
 
-    // Максимальное время между байтами 200 битовых знаков
+    // Максимальное время между байтами в пакете 200 битовых знаков
     HAL_UART_ReceiverTimeout_Config(&huart1, 200);
     HAL_UART_EnableReceiverTimeout(&huart1);
 }

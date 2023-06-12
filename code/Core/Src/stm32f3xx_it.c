@@ -106,13 +106,12 @@ void USART1_IRQHandler(void)
 /* Parameters : None */
 /* Return : None */
 /******************************************************************************/
-// for ADC1_2 (dual)
 void DMA1_Channel1_IRQHandler(void)
 {
     if (READ_BIT(DMA1->ISR, DMA_ISR_TCIF1)) {
         SET_BIT(DMA1->IFCR, DMA_IFCR_CTCIF1);
-        adc_stop();
-        flags.data_adc_collect = 1;
+        ADC12_Dual_Stop();
+        flags.adc_data_collect = 1;
         HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13); // TEST period PIN
     }
 }
@@ -126,8 +125,6 @@ void DMA1_Channel1_IRQHandler(void)
 /* Parameters : None */
 /* Return : None */
 /******************************************************************************/
-
-// for DAC1
 void DMA2_Channel3_IRQHandler(void)
 {
     if (READ_BIT(DMA2->ISR, DMA_ISR_TCIF3)) {
@@ -137,7 +134,6 @@ void DMA2_Channel3_IRQHandler(void)
 
         if (flags.start_req) {
             flags.start_req = 0;
-            adc_start(number_samples);
+            ADC12_Dual_Start(adc_number_samples);
         }
-    }
 }

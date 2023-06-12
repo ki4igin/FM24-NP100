@@ -9,12 +9,12 @@ void MX_OPAMP3_Init(void);
 void MX_OPAMP4_Init(void);
 
 /******************************************************************************/
-/* Function Name : opamp_enable */
+/* Function Name : OPAMP_Enable */
 /* Description : Starts the specified operational amplifier. */
 /* Parameters : opamp: Pointer to the operational amplifier instance */
 /* Return : None */
 /******************************************************************************/
-void opamp_enable(OPAMP_TypeDef *opamp)
+void OPAMP_Enable(OPAMP_TypeDef *opamp)
 {
     SET_BIT(opamp->CSR, OPAMP_CSR_OPAMPxEN);
 }
