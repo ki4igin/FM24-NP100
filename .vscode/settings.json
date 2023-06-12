@@ -62,6 +62,7 @@
         "TIMERCONTROLLEDMUXMODE",
         "TRGO",
         "TSEL",
+        "UART",
         "USART",
         "WORDLENGTH"
     ]
