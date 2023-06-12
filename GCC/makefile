@@ -63,14 +63,14 @@ SOURCES_C_LIB := $(wildcard $(addsuffix /*.c, $(INCLUDES_LIB)))
 # Compilers and Utilities binaries
 ###############################################################################
 PREFIX = arm-none-eabi-
-CC_PATH ?= C:/toolchain/arm-gnu-toolchain-12.2.mpacbti-rel1-mingw-w64-i686-arm-none-eabi/bin
+CC_PATH ?=
 
-AS 		:= $(CC_PATH)/$(PREFIX)gcc -xassembler-with-cpp
-CC 		:= $(CC_PATH)/$(PREFIX)gcc.exe
-LD 		:= $(CC_PATH)/$(PREFIX)gcc.exe
-OBJCOPY := $(CC_PATH)/$(PREFIX)objcopy
-OBJDUMP := $(CC_PATH)/$(PREFIX)objdump
-SZ 		:= $(CC_PATH)/$(PREFIX)size
+AS 		:= $(CC_PATH)$(PREFIX)gcc -xassembler-with-cpp
+CC 		:= $(CC_PATH)$(PREFIX)gcc.exe
+LD 		:= $(CC_PATH)$(PREFIX)gcc.exe
+OBJCOPY := $(CC_PATH)$(PREFIX)objcopy
+OBJDUMP := $(CC_PATH)$(PREFIX)objdump
+SZ 		:= $(CC_PATH)$(PREFIX)size
 CC_VERSION := $(shell $(CC) --version)
 
 
@@ -160,7 +160,7 @@ all: build
 	@echo
 	$(call echo_green,"Listing:") $(BUILD_DIR)/$(TARGET).lss
 
-build: check_cc info $(BUILD_DIR)/$(TARGET).hex $(BUILD_DIR)/$(TARGET).lss
+build: info $(BUILD_DIR)/$(TARGET).hex $(BUILD_DIR)/$(TARGET).lss
 
 rebuild: clean build
 
@@ -215,12 +215,6 @@ PHONY += test
 test :
 	@echo ${BUILD_DIR}
 	@echo ${OBJECTS}
-
-PHONY += check_cc
-check_cc:
-ifeq ($(wildcard $(CC_PATH)),)
-	$(error Compiler path: $(CC_PATH) not found)
-endif
 
 
 ###############################################################################
