@@ -1,12 +1,26 @@
 #include "ramp.h"
 #include "opamp.h"
 #include "periph.h"
+#include "tools.h"
 
 UART_HandleTypeDef huart1;
 
 uint32_t adc_number_samples = ADC_BUF_LEN_MAX;
 
 uint8_t uart_buf[UART_RX_NBUF];
+
+enum __attribute__((packed)) command {
+    COMMAND_START = 1,
+    COMMAND_STOP = 2,
+    COMMAND_RESET = 3,
+    COMMAND_TEST = 4,
+    COMMAND_RAMP = 5,
+    COMMAND_AMP = 6,
+    COMMAND_DF = 7,
+    COMMAND_DF_VS_U = 8,
+    COMMAND_FD = 9,
+    COMMAND_FM = 10,
+};
 
 static struct cmd {
     enum command id :8;
@@ -20,6 +34,8 @@ struct pac_adc pac_adc = {
 volatile struct flags flags = {0};
 
 static void Cmd_Work(struct cmd);
+static void Change_DF(uint32_t deviation_freq_kHz);
+static void Change_Amp(uint32_t amp_mV);
 static void UART_Send_Test(UART_HandleTypeDef *huart);
 static void ADC_Start_Collect(uint32_t number_samples);
 static void UART_Send_ADC_Data(void);
@@ -85,7 +101,7 @@ static void Cmd_Work(struct cmd cmd)
         Ramp_Change_Type(cmd.arg);
         break;
     case COMMAND_AMP:
-        Ramp_Change_Amp(cmd.arg);
+        Change_Amp(cmd.arg);
         break;
     case COMMAND_FD:
         ADC12_Dual_Change_Fd(cmd.arg);
@@ -93,9 +109,31 @@ static void Cmd_Work(struct cmd cmd)
     case COMMAND_FM:
         DAC1_Change_Fm(cmd.arg);
         break;
+    case COMMAND_DF:
+        Change_DF(cmd.arg);
+        break;
+    case COMMAND_DF_VS_U:
+        break;
+
     default:
         break;
     }
+}
+
+static void Change_DF(uint32_t deviation_freq_kHz)
+{
+    if (deviation_freq_kHz > DEVIATION_FREQ_MAX_kHz) {
+        return;
+    }
+
+    uint32_t dac_code = df2code(deviation_freq_kHz, SENSITIVITY_VCO_kHz);
+    Ramp_Change_Amp(dac_code);
+}
+
+static void Change_Amp(uint32_t amp_mV)
+{
+    uint32_t dac_code = volt2code(amp_mV, ADC_REF_mV);
+    Ramp_Change_Amp(dac_code);
 }
 
 static void ADC_Start_Collect(uint32_t number_samples)
