@@ -1,25 +1,42 @@
-#include "ramp.h"
+#include "gen.h"
 #include "opamp.h"
 #include "periph.h"
+#include "tools.h"
+
+#define UART_RX_NBUF 4
+
+enum __attribute__((packed)) command {
+    COMMAND_START = 1,
+    COMMAND_STOP = 2,
+    COMMAND_RESET = 3,
+    COMMAND_TEST = 4,
+    COMMAND_GEN_TYPE = 5,
+    COMMAND_AMP = 6,
+    COMMAND_DF = 7,
+    COMMAND_DF_VS_U = 8,
+    COMMAND_FD = 9,
+    COMMAND_FM = 10,
+};
 
 UART_HandleTypeDef huart1;
-
 uint32_t adc_number_samples = ADC_BUF_LEN_MAX;
+struct pac_adc pac_adc = {
+    .preamble.id = 0x01,
+};
+volatile struct flags flags = {0};
 
-uint8_t uart_buf[UART_RX_NBUF];
+static uint32_t vco_sensitivity = VCO_SENSITIVITY_INIT;
+static uint8_t uart_buf[UART_RX_NBUF];
 
 static struct cmd {
     enum command id :8;
     uint32_t arg    :24;
 } cmd;
 
-struct pac_adc pac_adc = {
-    .preamble.id = 0x01,
-};
-
-volatile struct flags flags = {0};
-
 static void Cmd_Work(struct cmd);
+static void Change_DF(uint32_t deviation_freq_kHz);
+static void Change_Amp(uint32_t amp_mV);
+static void Change_Sensitivity(uint32_t sensitivity);
 static void UART_Send_Test(UART_HandleTypeDef *huart);
 static void ADC_Start_Collect(uint32_t number_samples);
 static void UART_Send_ADC_Data(void);
@@ -48,7 +65,7 @@ int main(void)
     TIM2_Init();
     TIM4_Init();
 
-    Ramp_Make(DAC_AMP_CODE_INIT, RAMP_TYPE_NONSYM);
+    Gen_Make(DAC_AMP_CODE_INIT, GEN_TYPE_RAMP_NONSYM);
 
     ADC12_Dual_Change_Fd(FREQ_500K);
     DAC1_Change_Fm(FREQ_30H517578125);
@@ -81,11 +98,11 @@ static void Cmd_Work(struct cmd cmd)
     case COMMAND_TEST:
         UART_Send_Test(&huart1);
         break;
-    case COMMAND_RAMP:
-        Ramp_Change_Type(cmd.arg);
+    case COMMAND_GEN_TYPE:
+        Gen_Change_Type(cmd.arg);
         break;
     case COMMAND_AMP:
-        Ramp_Change_Amp(cmd.arg);
+        Change_Amp(cmd.arg);
         break;
     case COMMAND_FD:
         ADC12_Dual_Change_Fd(cmd.arg);
@@ -93,9 +110,37 @@ static void Cmd_Work(struct cmd cmd)
     case COMMAND_FM:
         DAC1_Change_Fm(cmd.arg);
         break;
+    case COMMAND_DF:
+        Change_DF(cmd.arg);
+        break;
+    case COMMAND_DF_VS_U:
+        Change_Sensitivity(cmd.arg);
+        break;
+
     default:
         break;
     }
+}
+
+static void Change_Sensitivity(uint32_t sensitivity)
+{
+    vco_sensitivity = sensitivity;
+}
+
+static void Change_DF(uint32_t deviation_freq_kHz)
+{
+    if (deviation_freq_kHz > DEVIATION_FREQ_MAX_kHz) {
+        return;
+    }
+
+    uint32_t amp_code = df2code(deviation_freq_kHz, vco_sensitivity);
+    Gen_Change_AmpCode(amp_code);
+}
+
+static void Change_Amp(uint32_t amp_mV)
+{
+    uint32_t amp_code = volt2code(amp_mV, ADC_REF_mV);
+    Gen_Change_AmpCode(amp_code);
 }
 
 static void ADC_Start_Collect(uint32_t number_samples)
