@@ -7,8 +7,8 @@
 
 enum gen_type {
     GEN_TYPE_RAMP_SYM = 1,
-    GEN_TYPE_RAMP_NONSYM = 2,    
-    GEN_TYPE_DC = 3,    
+    GEN_TYPE_RAMP_NONSYM = 2,
+    GEN_TYPE_DC = 3,
 };
 
 extern uint16_t gen_buf[GEN_BUF_SIZE];

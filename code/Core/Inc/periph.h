@@ -5,7 +5,7 @@
 #include "gen.h"
 #include "main.h"
 
-#define ADC_DAC_MAX_FREQ  2000000
+#define ADC_DAC_MAX_FREQ 2000000
 
 enum freq {
     FREQ_2M = 0,
@@ -81,7 +81,6 @@ inline static void ADC12_Dual_Change_Fd(enum freq fd)
 // DAC стартует по переполнению таймера TIM2
 inline static void DAC1_Start(void)
 {
-    
     SET_BIT(TIM2->EGR, TIM_EGR_UG);
     SET_BIT(TIM2->CR1, TIM_CR1_CEN);
 }
