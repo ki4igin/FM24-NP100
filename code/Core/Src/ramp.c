@@ -1,7 +1,7 @@
 #include "ramp.h"
 #include "main.h"
 
-typedef uint32_t q32_8;
+typedef uint32_t q32_8_t;
 
 uint16_t ramp_buf[RAMP_BUF_SIZE];
 
@@ -12,14 +12,14 @@ static void Ramp_Make_NonSym(uint32_t amp_code)
 {
     // Используются 8 знаков после запятой (двоичной),
     // максимальное возможное значение 1048386 (укладывается в 32 бита)
-    q32_8 amp = amp_code << 8;
-    q32_8 half_dac_range = 2048 << 8;
-    q32_8 start_val = half_dac_range - amp / 2;
+    q32_8_t amp = amp_code << 8;
+    q32_8_t half_dac_range = 2048 << 8;
+    q32_8_t start_val = half_dac_range - amp / 2;
 
-    q32_8 k_ramp = amp / (RAMP_BUF_SIZE - 1);
+    q32_8_t k_ramp = amp / (RAMP_BUF_SIZE - 1);
 
     for (uint32_t i = 0; i < RAMP_BUF_SIZE; i++) {
-        q32_8 val = start_val + i * k_ramp;
+        q32_8_t val = start_val + i * k_ramp;
         ramp_buf[i] = val >> 8;
     }
 }
@@ -28,15 +28,15 @@ static void Ramp_Make_Sym(uint32_t amp_code)
 {
     // Используются 8 знаков после запятой (двоичной),
     // максимальное возможное значение 1048448 (укладывается в 32 бита)
-    q32_8 amp = amp_code << 8;
-    q32_8 half_dac_range = 2048 << 8;
-    q32_8 start_val = half_dac_range - amp / 2;
+    q32_8_t amp = amp_code << 8;
+    q32_8_t half_dac_range = 2048 << 8;
+    q32_8_t start_val = half_dac_range - amp / 2;
     // В центре будет два одинаковых значения, поэтому при вычислении
     // коэффициента наклона из размера буфера вычитаются эти два отчета
-    q32_8 k_ramp = 2 * amp / (RAMP_BUF_SIZE - 2);
+    q32_8_t k_ramp = 2 * amp / (RAMP_BUF_SIZE - 2);
 
     for (uint32_t i = 0; i < (RAMP_BUF_SIZE / 2); i++) {
-        q32_8 val = start_val + i * k_ramp;
+        q32_8_t val = start_val + i * k_ramp;
         ramp_buf[i] = val >> 8;
         ramp_buf[RAMP_BUF_SIZE - 1 - i] = ramp_buf[i];
     }
