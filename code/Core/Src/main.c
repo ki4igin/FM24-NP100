@@ -1,4 +1,4 @@
-#include "ramp.h"
+#include "gen.h"
 #include "opamp.h"
 #include "periph.h"
 #include "tools.h"
@@ -14,7 +14,7 @@ enum __attribute__((packed)) command {
     COMMAND_STOP = 2,
     COMMAND_RESET = 3,
     COMMAND_TEST = 4,
-    COMMAND_RAMP = 5,
+    COMMAND_GEN_TYPE = 5,
     COMMAND_AMP = 6,
     COMMAND_DF = 7,
     COMMAND_DF_VS_U = 8,
@@ -64,7 +64,7 @@ int main(void)
     TIM2_Init();
     TIM4_Init();
 
-    Ramp_Make(DAC_AMP_CODE_INIT, RAMP_TYPE_NONSYM);
+    Gen_Make(DAC_AMP_CODE_INIT, GEN_TYPE_RAMP_NONSYM);
 
     ADC12_Dual_Change_Fd(FREQ_500K);
     DAC1_Change_Fm(FREQ_30H517578125);
@@ -97,8 +97,8 @@ static void Cmd_Work(struct cmd cmd)
     case COMMAND_TEST:
         UART_Send_Test(&huart1);
         break;
-    case COMMAND_RAMP:
-        Ramp_Change_Type(cmd.arg);
+    case COMMAND_GEN_TYPE:
+        Gen_Change_Type(cmd.arg);
         break;
     case COMMAND_AMP:
         Change_Amp(cmd.arg);
@@ -126,14 +126,14 @@ static void Change_DF(uint32_t deviation_freq_kHz)
         return;
     }
 
-    uint32_t dac_code = df2code(deviation_freq_kHz, SENSITIVITY_VCO_kHz);
-    Ramp_Change_Amp(dac_code);
+    uint32_t amp_code = df2code(deviation_freq_kHz, SENSITIVITY_VCO_kHz);
+    Gen_Change_AmpCode(amp_code);
 }
 
 static void Change_Amp(uint32_t amp_mV)
 {
-    uint32_t dac_code = volt2code(amp_mV, ADC_REF_mV);
-    Ramp_Change_Amp(dac_code);
+    uint32_t amp_code = volt2code(amp_mV, ADC_REF_mV);
+    Gen_Change_AmpCode(amp_code);
 }
 
 static void ADC_Start_Collect(uint32_t number_samples)

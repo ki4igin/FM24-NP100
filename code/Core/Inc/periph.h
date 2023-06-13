@@ -2,7 +2,8 @@
 #define __PERIPH_H
 
 #include "stm32f3xx.h"
-#include "ramp.h"
+#include "gen.h"
+#include "main.h"
 
 #define ADC_DAC_MAX_FREQ  2000000
 
@@ -80,6 +81,7 @@ inline static void ADC12_Dual_Change_Fd(enum freq fd)
 // DAC стартует по переполнению таймера TIM2
 inline static void DAC1_Start(void)
 {
+    
     SET_BIT(TIM2->EGR, TIM_EGR_UG);
     SET_BIT(TIM2->CR1, TIM_CR1_CEN);
 }
@@ -95,8 +97,8 @@ inline static void DAC1_Change_Fm(enum freq fm)
         return;
     }
 
-    // (32 - __CLZ(RAMP_BUF_SIZE) - 1) эквивалентно log2(RAMP_BUF_SIZE)
-    enum freq dac_fd = fm - (32 - __CLZ(RAMP_BUF_SIZE) - 1);
+    // (32 - __CLZ(GEN_BUF_SIZE) - 1) эквивалентно log2(GEN_BUF_SIZE)
+    enum freq dac_fd = fm - (32 - __CLZ(GEN_BUF_SIZE) - 1);
 
     uint32_t arr = Freq_To_TimArr(dac_fd);
     TIM_Change_ARR(TIM2, arr);
