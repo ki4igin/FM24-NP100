@@ -7,9 +7,9 @@
 typedef uint32_t q32_x_t;
 typedef q32_x_t q32_4_t;
 
-inline static uint32_t volt2code(q32_x_t volt, q32_x_t rev)
+inline static uint32_t volt2code(q32_x_t volt, q32_x_t ref)
 {
-    return 4095 * rev / volt;
+    return 4095 * ref / volt;
 }
 
 // deviation_freq - девиация частоты в кГц, от 0 до 200000

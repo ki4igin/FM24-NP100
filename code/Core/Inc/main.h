@@ -9,12 +9,11 @@ extern "C" {
 
 #define DAC_AMP_CODE_INIT      200
 #define SYSTEM_CORE_CLOCK      72000000
-#define UART_RX_NBUF           4
 
 #define ADC_BUF_LEN_MAX        8192
 #define ADC_REF_mV             3300
 #define DEVIATION_FREQ_MAX_kHz 200000
-#define SENSITIVITY_VCO_kHz    760000
+#define VCO_SENSITIVITY_INIT   760000
 #define UART_BAUD_RATE         115200
 
 struct pac_adc {
