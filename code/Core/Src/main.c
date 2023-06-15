@@ -5,17 +5,17 @@
 
 #define UART_RX_NBUF 4
 
-enum __attribute__((packed)) command {
-    COMMAND_START = 1,
-    COMMAND_STOP = 2,
-    COMMAND_RESET = 3,
-    COMMAND_TEST = 4,
-    COMMAND_GEN_TYPE = 5,
-    COMMAND_AMP = 6,
-    COMMAND_DF = 7,
-    COMMAND_DF_VS_U = 8,
-    COMMAND_FD = 9,
-    COMMAND_FM = 10,
+enum __attribute__((packed)) cmd_id {
+    CMD_START = 1,
+    CMD_STOP = 2,
+    CMD_RESET = 3,
+    CMD_TEST = 4,
+    CMD_GEN_TYPE = 5,
+    CMD_AMP = 6,
+    CMD_DEVIATION = 7,
+    CMD_SENSITIVITY = 8,
+    CMD_FD = 9,
+    CMD_FM = 10,
 };
 
 UART_HandleTypeDef huart1;
@@ -29,8 +29,8 @@ static uint32_t vco_sensitivity = VCO_SENSITIVITY_INIT;
 static uint8_t uart_buf[UART_RX_NBUF];
 
 static struct cmd {
-    enum command id :8;
-    uint32_t arg    :24;
+    enum cmd_id id :8;
+    uint32_t arg   :24;
 } cmd;
 
 static void Cmd_Work(struct cmd);
@@ -89,31 +89,31 @@ int main(void)
 static void Cmd_Work(struct cmd cmd)
 {
     switch (cmd.id) {
-    case COMMAND_START:
+    case CMD_START:
         ADC_Start_Collect(cmd.arg);
         break;
-    case COMMAND_RESET:
+    case CMD_RESET:
         HAL_NVIC_SystemReset();
         break;
-    case COMMAND_TEST:
+    case CMD_TEST:
         UART_Send_Test(&huart1);
         break;
-    case COMMAND_GEN_TYPE:
+    case CMD_GEN_TYPE:
         Gen_Change_Type(cmd.arg);
         break;
-    case COMMAND_AMP:
+    case CMD_AMP:
         Change_Amp(cmd.arg);
         break;
-    case COMMAND_FD:
+    case CMD_FD:
         ADC12_Dual_Change_Fd(cmd.arg);
         break;
-    case COMMAND_FM:
+    case CMD_FM:
         DAC1_Change_Fm(cmd.arg);
         break;
-    case COMMAND_DF:
+    case CMD_DEVIATION:
         Change_DF(cmd.arg);
         break;
-    case COMMAND_DF_VS_U:
+    case CMD_SENSITIVITY:
         Change_Sensitivity(cmd.arg);
         break;
 
@@ -159,7 +159,7 @@ static void ADC_Start_Collect(uint32_t number_samples)
 static void UART_Send_Test(UART_HandleTypeDef *huart)
 {
     struct cmd cmd = {
-        .id = COMMAND_TEST,
+        .id = CMD_TEST,
         .arg = 0x112233};
 
     HAL_UART_Transmit(huart, (uint8_t *)&cmd, sizeof(cmd), 1000);

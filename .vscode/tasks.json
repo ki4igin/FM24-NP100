@@ -46,7 +46,7 @@
         {
             "label": "MCU Flash Debug",
             "type": "shell",
-            "command": "filePath=./build/debug/ ./GCC/McuFlash.sh",
+            "command": "filePath=./build/debug/ ./GCC/mcu_flash.sh",
             "args": [],
             "group": {
                 "kind": "build",
@@ -57,7 +57,7 @@
         {
             "label": "MCU Flash Release",
             "type": "shell",
-            "command": "filePath=./build/release/ ./GCC/McuFlash.sh",
+            "command": "filePath=./build/release/ ./GCC/mcu_flash.sh",
             "args": [],
             "group": {
                 "kind": "build",
@@ -68,7 +68,7 @@
         {
             "label": "MCU Erase",
             "type": "shell",
-            "command": "./GCC/McuErase.sh",
+            "command": "./GCC/mcu_erase.sh",
             "args": [],
             "group": {
                 "kind": "build",
