@@ -172,6 +172,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
     if (huart == &huart1) {
         cmd = *(struct cmd *)uart_buf;
         flags.is_new_cmd = 1;
+        HAL_UART_Receive_IT(&huart1, uart_buf, UART_RX_NBUF);
     }
 }
 
