@@ -1,5 +1,4 @@
 #include "gen.h"
-#include "main.h"
 
 typedef uint32_t u32_8_t;
 typedef int32_t i32_20_t;

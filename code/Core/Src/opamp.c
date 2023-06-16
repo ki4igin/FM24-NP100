@@ -1,71 +1,108 @@
-#include "stm32f3xx.h"
+#include "opamp.h"
+#include "stm32f3xx_ll_opamp.h"
+#include "stm32f3xx_ll_gpio.h"
+#include "stm32f3xx_ll_bus.h"
 
-/**
- * @brief OPAMP1 Initialization Function
- * @param None
- * @retval None
- */
-void MX_OPAMP1_Init(void)
+void OPAMP1_Init(void)
 {
-    static OPAMP_HandleTypeDef hopamp;
+    LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOA);
+    /**OPAMP1 GPIO Configuration
+    PA1   ------> OPAMP1_VINP
+    PA2   ------> OPAMP1_VOUT
+    PA3   ------> OPAMP1_VINM
+    */
+    LL_GPIO_InitTypeDef GPIO_InitStruct = {
+        .Pin = LL_GPIO_PIN_1 | LL_GPIO_PIN_2 | LL_GPIO_PIN_3,
+        .Mode = LL_GPIO_MODE_ANALOG,
+        .Pull = LL_GPIO_PULL_NO,
+    };
+    LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-    hopamp.Instance = OPAMP1;
-    hopamp.Init.Mode = OPAMP_STANDALONE_MODE;
-    hopamp.Init.NonInvertingInput = OPAMP_NONINVERTINGINPUT_IO0;
-    hopamp.Init.InvertingInput = OPAMP_INVERTINGINPUT_IO1;
-    hopamp.Init.TimerControlledMuxmode = OPAMP_TIMERCONTROLLEDMUXMODE_DISABLE;
-    hopamp.Init.UserTrimming = OPAMP_TRIMMING_FACTORY;
-    HAL_OPAMP_Init(&hopamp);
+    LL_OPAMP_InitTypeDef OPAMP_InitStruct = {
+        .FunctionalMode = LL_OPAMP_MODE_STANDALONE,
+        .InputNonInverting = LL_OPAMP_INPUT_NONINVERT_IO0,
+        .InputInverting = LL_OPAMP_INPUT_INVERT_IO1,
+    };
+    LL_OPAMP_Init(OPAMP1, &OPAMP_InitStruct);
+
+    LL_OPAMP_SetInputsMuxMode(OPAMP1, LL_OPAMP_INPUT_MUX_DISABLE);
+    LL_OPAMP_SetTrimmingMode(OPAMP1, LL_OPAMP_TRIMMING_FACTORY);
+    LL_OPAMP_Enable(OPAMP1);
 }
 
-/**
- * @brief OPAMP2 Initialization Function
- * @param None
- * @retval None
- */
-void MX_OPAMP2_Init(void)
+void OPAMP2_Init(void)
 {
-    static OPAMP_HandleTypeDef hopamp;
+    LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOA);
+    /**OPAMP2 GPIO Configuration
+    PA5   ------> OPAMP2_VINM
+    PA6   ------> OPAMP2_VOUT
+    PA7   ------> OPAMP2_VINP
+    */
+    LL_GPIO_InitTypeDef GPIO_InitStruct = {
+        .Pin = LL_GPIO_PIN_5 | LL_GPIO_PIN_6 | LL_GPIO_PIN_7,
+        .Mode = LL_GPIO_MODE_ANALOG,
+        .Pull = LL_GPIO_PULL_NO,
+    };
+    LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-    hopamp.Instance = OPAMP2;
-    hopamp.Init.Mode = OPAMP_STANDALONE_MODE;
-    hopamp.Init.NonInvertingInput = OPAMP_NONINVERTINGINPUT_IO0;
-    hopamp.Init.InvertingInput = OPAMP_INVERTINGINPUT_IO1;
-    hopamp.Init.TimerControlledMuxmode = OPAMP_TIMERCONTROLLEDMUXMODE_DISABLE;
-    hopamp.Init.UserTrimming = OPAMP_TRIMMING_FACTORY;
-    HAL_OPAMP_Init(&hopamp);
+    LL_OPAMP_InitTypeDef OPAMP_InitStruct = {
+        .FunctionalMode = LL_OPAMP_MODE_STANDALONE,
+        .InputNonInverting = LL_OPAMP_INPUT_NONINVERT_IO0,
+        .InputInverting = LL_OPAMP_INPUT_INVERT_IO1,
+    };
+    LL_OPAMP_Init(OPAMP2, &OPAMP_InitStruct);
+
+    LL_OPAMP_SetInputsMuxMode(OPAMP2, LL_OPAMP_INPUT_MUX_DISABLE);
+    LL_OPAMP_SetTrimmingMode(OPAMP2, LL_OPAMP_TRIMMING_FACTORY);
+    LL_OPAMP_Enable(OPAMP2);
 }
 
-/**
- * @brief OPAMP3 Initialization Function
- * @param None
- * @retval None
- */
-void MX_OPAMP3_Init(void)
+void OPAMP3_Init(void)
 {
-    static OPAMP_HandleTypeDef hopamp;
+    LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOB);
+    /**OPAMP3 GPIO Configuration
+    PB0   ------> OPAMP3_VINP
+    PB1   ------> OPAMP3_VOUT
+    */
+    LL_GPIO_InitTypeDef GPIO_InitStruct = {
+        .Pin = LL_GPIO_PIN_0 | LL_GPIO_PIN_1,
+        .Mode = LL_GPIO_MODE_ANALOG,
+        .Pull = LL_GPIO_PULL_NO,
+    };
+    LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-    hopamp.Instance = OPAMP3;
-    hopamp.Init.Mode = OPAMP_FOLLOWER_MODE;
-    hopamp.Init.NonInvertingInput = OPAMP_NONINVERTINGINPUT_IO0;
-    hopamp.Init.TimerControlledMuxmode = OPAMP_TIMERCONTROLLEDMUXMODE_DISABLE;
-    hopamp.Init.UserTrimming = OPAMP_TRIMMING_FACTORY;
-    HAL_OPAMP_Init(&hopamp);
+    LL_OPAMP_InitTypeDef OPAMP_InitStruct = {
+        .FunctionalMode = LL_OPAMP_MODE_FOLLOWER,
+        .InputNonInverting = LL_OPAMP_INPUT_NONINVERT_IO0,
+    };
+    LL_OPAMP_Init(OPAMP3, &OPAMP_InitStruct);
+
+    LL_OPAMP_SetInputsMuxMode(OPAMP3, LL_OPAMP_INPUT_MUX_DISABLE);
+    LL_OPAMP_SetTrimmingMode(OPAMP3, LL_OPAMP_TRIMMING_FACTORY);
+    LL_OPAMP_Enable(OPAMP3);
 }
 
-/**
- * @brief OPAMP4 Initialization Function
- * @param None
- * @retval None
- */
-void MX_OPAMP4_Init(void)
+void OPAMP4_Init(void)
 {
-    static OPAMP_HandleTypeDef hopamp;
+    LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOB);
+    /**OPAMP4 GPIO Configuration
+    PB11   ------> OPAMP4_VINP
+    PB12   ------> OPAMP4_VOUT
+    */
+    LL_GPIO_InitTypeDef GPIO_InitStruct = {
+        .Pin = LL_GPIO_PIN_11 | LL_GPIO_PIN_12,
+        .Mode = LL_GPIO_MODE_ANALOG,
+        .Pull = LL_GPIO_PULL_NO,
+    };
 
-    hopamp.Instance = OPAMP4;
-    hopamp.Init.Mode = OPAMP_FOLLOWER_MODE;
-    hopamp.Init.NonInvertingInput = OPAMP_NONINVERTINGINPUT_IO3;
-    hopamp.Init.TimerControlledMuxmode = OPAMP_TIMERCONTROLLEDMUXMODE_DISABLE;
-    hopamp.Init.UserTrimming = OPAMP_TRIMMING_FACTORY;
-    HAL_OPAMP_Init(&hopamp);
+    LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+    LL_OPAMP_InitTypeDef OPAMP_InitStruct = {
+        .FunctionalMode = LL_OPAMP_MODE_FOLLOWER,
+        .InputNonInverting = LL_OPAMP_INPUT_NONINVERT_IO3,
+    };
+    LL_OPAMP_Init(OPAMP4, &OPAMP_InitStruct);
+    LL_OPAMP_SetInputsMuxMode(OPAMP4, LL_OPAMP_INPUT_MUX_DISABLE);
+    LL_OPAMP_SetTrimmingMode(OPAMP4, LL_OPAMP_TRIMMING_FACTORY);
+    LL_OPAMP_Enable(OPAMP4);
 }

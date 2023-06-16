@@ -1,7 +1,7 @@
 #ifndef __GEN_H
 #define __GEN_H
 
-#include "stdint.h"
+#include "stm32f3xx.h"
 
 #define GEN_BUF_SIZE 256
 

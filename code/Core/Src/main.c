@@ -1,6 +1,9 @@
-#include "gen.h"
-#include "opamp.h"
+#include "main.h"
+#include "rcc.h"
+#include "gpio.h"
 #include "periph.h"
+#include "opamp.h"
+#include "gen.h"
 #include "tools.h"
 
 #define UART_RX_NBUF 4
@@ -40,25 +43,18 @@ static void Change_Sensitivity(uint32_t sensitivity);
 static void UART_Send_Test(UART_HandleTypeDef *huart);
 static void ADC_Start_Collect(uint32_t number_samples);
 static void UART_Send_ADC_Data(void);
-static void SystemClock_Config(void);
-static void MX_GPIO_Init(void);
-static void MX_USART1_UART_Init(void);
+static void USART1_UART_Init(void);
 
 int main(void)
 {
     HAL_Init();
-    SystemClock_Config();
-    MX_GPIO_Init();
-    MX_OPAMP4_Init();
-    MX_OPAMP1_Init();
-    MX_OPAMP2_Init();
-    MX_OPAMP3_Init();
-    MX_USART1_UART_Init();
-
-    OPAMP_Enable(OPAMP1);
-    OPAMP_Enable(OPAMP2);
-    OPAMP_Enable(OPAMP3);
-    OPAMP_Enable(OPAMP4);
+    RCC_SystemClock_Config();
+    GPIO_Init();
+    OPAMP1_Init();
+    OPAMP2_Init();
+    OPAMP3_Init();
+    OPAMP4_Init();
+    USART1_UART_Init();
 
     ADC12_Dual_Init();
     DAC1_Init();
@@ -75,6 +71,12 @@ int main(void)
     HAL_UART_Receive_IT(&huart1, uart_buf, UART_RX_NBUF);
 
     while (1) {
+        static uint32_t led_cnt = 0;
+        if (led_cnt++ > 0x7FFFFF) {
+            led_cnt = 0;
+            GPIO_LedToggle();
+        }
+
         if (flags.is_new_cmd) {
             flags.is_new_cmd = 0;
             Cmd_Work(cmd);
@@ -189,55 +191,11 @@ static void UART_Send_ADC_Data(void)
 }
 
 /**
- * @brief System Clock Configuration
- * System Core Clock = 72 MHz
- * @retval None
- */
-static void SystemClock_Config(void)
-{
-    RCC_OscInitTypeDef RCC_OscInitStruct = {0};
-    RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
-    RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
-
-    /** Initializes the RCC Oscillators according to the specified parameters
-     * in the RCC_OscInitTypeDef structure.
-     */
-    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
-    RCC_OscInitStruct.HSEState = RCC_HSE_ON;
-    RCC_OscInitStruct.HSEPredivValue = RCC_HSE_PREDIV_DIV1;
-    RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-    RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-    RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-    RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL9;
-    if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) {
-        Error_Handler();
-    }
-
-    /** Initializes the CPU, AHB and APB buses clocks
-     */
-    RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK
-                                | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
-    RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-    RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-    RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
-    RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
-
-    if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK) {
-        Error_Handler();
-    }
-    PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART1;
-    PeriphClkInit.Usart1ClockSelection = RCC_USART1CLKSOURCE_PCLK2;
-    if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK) {
-        Error_Handler();
-    }
-}
-
-/**
  * @brief USART1 Initialization Function
  * @param None
  * @retval None
  */
-static void MX_USART1_UART_Init(void)
+static void USART1_UART_Init(void)
 {
     NVIC_SetPriority(USART1_IRQn, 2);
 
@@ -261,46 +219,6 @@ static void MX_USART1_UART_Init(void)
 }
 
 /**
- * @brief GPIO Initialization Function
- * @param None
- * @retval None
- */
-static void MX_GPIO_Init(void)
-{
-    GPIO_InitTypeDef GPIO_InitStruct = {0};
-
-    /* GPIO Ports Clock Enable */
-    __HAL_RCC_GPIOC_CLK_ENABLE();
-    __HAL_RCC_GPIOF_CLK_ENABLE();
-    __HAL_RCC_GPIOA_CLK_ENABLE();
-    __HAL_RCC_GPIOB_CLK_ENABLE();
-
-    /*Configure GPIO pin Output Level */
-    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_15, GPIO_PIN_RESET);
-
-    /*Configure GPIO pin : PC13 */
-    GPIO_InitStruct.Pin = GPIO_PIN_13;
-    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-    HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
-    /*Configure GPIO pin : PB15 */
-    GPIO_InitStruct.Pin = GPIO_PIN_15;
-    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-    /*Configure GPIO pin : PA4 */
-    GPIO_InitStruct.Pin = GPIO_PIN_4;
-    GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-}
-
-/**
  * @brief  This function is executed in case of error occurrence.
  * @retval None
  */
@@ -310,20 +228,3 @@ void Error_Handler(void)
     while (1) {
     }
 }
-
-#ifdef USE_FULL_ASSERT
-/**
- * @brief  Reports the name of the source file and the source line number
- *         where the assert_param error has occurred.
- * @param  file: pointer to the source file name
- * @param  line: assert_param error line source number
- * @retval None
- */
-void assert_failed(uint8_t *file, uint32_t line)
-{
-    /* USER CODE BEGIN 6 */
-    /* User can add his own implementation to report the file name and line number,
-       ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
-    /* USER CODE END 6 */
-}
-#endif /* USE_FULL_ASSERT */

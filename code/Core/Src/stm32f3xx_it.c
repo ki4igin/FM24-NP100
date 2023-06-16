@@ -1,6 +1,7 @@
-#include "main.h"
 #include "stm32f3xx_it.h"
 #include "periph.h"
+#include "gpio.h"
+#include "main.h"
 
 /******************************************************************************/
 /*           Cortex-M4 Processor Interruption and Exception Handlers          */
@@ -112,7 +113,7 @@ void DMA1_Channel1_IRQHandler(void)
         SET_BIT(DMA1->IFCR, DMA_IFCR_CTCIF1);
         ADC12_Dual_Stop();
         flags.adc_data_collect = 1;
-        HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13); // TEST period PIN
+        GPIO_TestPinToggle();
     }
 }
 
@@ -128,8 +129,7 @@ void DMA1_Channel1_IRQHandler(void)
 void DMA2_Channel3_IRQHandler(void)
 {
     if (READ_BIT(DMA2->ISR, DMA_ISR_TCIF3)) {
-        // TEST period PIN
-        HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_15);
+        GPIO_TestPinToggle();
         SET_BIT(DMA2->IFCR, DMA_IFCR_CGIF3);
 
         if (flags.start_req) {

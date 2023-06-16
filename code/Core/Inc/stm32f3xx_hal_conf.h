@@ -42,7 +42,7 @@ extern "C" {
 /*#define HAL_PCCARD_MODULE_ENABLED   */
 /*#define HAL_SRAM_MODULE_ENABLED   */
 /*#define HAL_HRTIM_MODULE_ENABLED   */
-#define HAL_OPAMP_MODULE_ENABLED
+// #define HAL_OPAMP_MODULE_ENABLED
 /*#define HAL_SDADC_MODULE_ENABLED   */
 /*#define HAL_TSC_MODULE_ENABLED   */
 /*#define HAL_COMP_MODULE_ENABLED   */

@@ -2,7 +2,8 @@
 #define __TOOLS_H
 
 #include "stm32f3xx.h"
-#include "main.h"
+
+#define ADC_REF_mV 3300
 
 typedef uint32_t u32_x_t;
 typedef u32_x_t u32_4_t;

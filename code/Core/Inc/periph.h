@@ -2,8 +2,8 @@
 #define __PERIPH_H
 
 #include "stm32f3xx.h"
+#include "system_stm32f3xx.h"
 #include "gen.h"
-#include "main.h"
 
 #define ADC_DAC_MAX_FREQ 2000000
 
@@ -35,7 +35,7 @@ void DAC1_Init(void);
 
 inline static uint32_t Freq_To_TimArr(enum freq freq)
 {
-    uint32_t max_tim_arr = (SYSTEM_CORE_CLOCK / ADC_DAC_MAX_FREQ);
+    uint32_t max_tim_arr = (SystemCoreClock / ADC_DAC_MAX_FREQ);
     return max_tim_arr * (1 << freq);
 }
 
