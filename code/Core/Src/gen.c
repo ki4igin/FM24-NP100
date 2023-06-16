@@ -86,7 +86,7 @@ static void Gen_Sin(uint32_t amp_code)
     for (uint32_t i = 0; i < GEN_BUF_SIZE; i++) {
         i32_20_t sin_sample_i32_20 = (sin_table[i] * amp_code);
         int32_t sin_sample = sin_sample_i32_20 >> 20;
-        gen_buf[i] = (uint16_t)(sin_sample & 0xFFF);
+        gen_buf[i] = (uint16_t)(sin_sample + 2048);
     }
 }
 
