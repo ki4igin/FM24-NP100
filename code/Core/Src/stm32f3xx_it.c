@@ -77,23 +77,6 @@ void PendSV_Handler(void)
  */
 void SysTick_Handler(void)
 {
-    HAL_IncTick();
-}
-
-/******************************************************************************/
-/* Function Name : USART1_IRQHandler */
-/* Description : Interrupt handler for USART1. Handles the RXNE interrupt */
-/* flag and performs necessary actions when the interrupt */
-/* flag is set. Increases the count_rx variable, checks */
-/* firstByteWait condition, clears the TIM3 counter register */
-/* if firstByteWait is 1, and calls the HAL_UART_IRQHandler */
-/* function. */
-/* Parameters : None */
-/* Return : None */
-/******************************************************************************/
-void USART1_IRQHandler(void)
-{
-    HAL_UART_IRQHandler(&huart1);
 }
 
 /******************************************************************************/
