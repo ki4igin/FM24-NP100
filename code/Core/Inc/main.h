@@ -34,7 +34,6 @@ struct pac_adc {
 };
 
 struct flags {
-    uint32_t is_new_cmd       :1;
     uint32_t adc_data_collect :1;
     uint32_t start_req        :1;
 };

@@ -8,8 +8,6 @@
 #include "tools.h"
 #include "uart.h"
 
-#define UART_RX_NBUF 4
-
 enum __attribute__((packed)) cmd_id {
     CMD_START = 1,
     CMD_STOP = 2,
@@ -23,18 +21,20 @@ enum __attribute__((packed)) cmd_id {
     CMD_FM = 10,
 };
 
-uint32_t adc_number_samples = ADC_BUF_LEN_MAX;
 struct pac_adc pac_adc = {
     .preamble.id = 0x01,
 };
+
+struct cmd {
+    enum cmd_id id :8;
+    uint32_t arg   :24;
+};
+
+uint32_t adc_number_samples = ADC_BUF_LEN_MAX;
+
 volatile struct flags flags = {0};
 
 static uint32_t vco_sensitivity = VCO_SENSITIVITY_INIT;
-
-static struct cmd {
-    enum cmd_id id :8;
-    uint32_t arg   :24;
-} cmd;
 
 static void Cmd_Work(struct cmd);
 static void Change_DF(uint32_t deviation_freq_kHz);
@@ -76,7 +76,6 @@ int main(void)
     DAC1_Start();
 
     Send_Test();
-    // HAL_UART_Receive_IT(&huart1, uart_buf, UART_RX_NBUF);
 
     while (1) {
         static uint32_t led_cnt = 0;
@@ -85,8 +84,9 @@ int main(void)
             GPIO_LedToggle();
         }
 
-        if (flags.is_new_cmd) {
-            flags.is_new_cmd = 0;
+        if (uart_rx.is_new_data) {
+            uart_rx.is_new_data = 0;
+            struct cmd cmd = *(struct cmd *)&uart_rx.data;
             Cmd_Work(cmd);
         }
         if (flags.adc_data_collect) {
@@ -174,22 +174,6 @@ static void Send_Test(void)
 
     UART_Send_Array(&cmd, sizeof(cmd));
 }
-
-// void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-// {
-//     if (huart == &huart1) {
-//         cmd = *(struct cmd *)uart_buf;
-//         flags.is_new_cmd = 1;
-//         HAL_UART_Receive_IT(&huart1, uart_buf, UART_RX_NBUF);
-//     }
-// }
-
-// void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
-// {
-//     if (huart == &huart1) {
-//         HAL_UART_Receive_IT(&huart1, uart_buf, UART_RX_NBUF);
-//     }
-// }
 
 static void Send_ADC_Data(void)
 {

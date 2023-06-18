@@ -6,11 +6,11 @@
 #include "buf.h"
 
 #define UART_BAUD_RATE 115200
-#define UART_NBUF_TX   256
-#define UART_NBUF_RX   4
 
 fifo_declare(uart_fifo_tx, UART_NBUF_TX);
 buf_declare(uart_buf_rx, UART_NBUF_RX);
+
+struct uart_rx uart_rx;
 
 void UART_Init(void)
 {
@@ -49,6 +49,9 @@ void UART_Init(void)
 
     LL_USART_DisableIT_CTS(USART1);
     LL_USART_ConfigAsyncMode(USART1);
+    LL_USART_SetRxTimeout(USART1, 200);
+    LL_USART_EnableRxTimeout(USART1);
+    LL_USART_EnableIT_RTO(USART1);
     LL_USART_Enable(USART1);
 }
 
@@ -68,5 +71,20 @@ void USART1_IRQHandler(void)
         if (fifo_is_empty(&uart_fifo_tx)) {
             LL_USART_DisableIT_TXE(USART1);
         }
+    }
+
+    if (LL_USART_IsActiveFlag_RXNE(USART1)) {
+        uart_buf_rx.data[uart_buf_rx.count] = LL_USART_ReceiveData8(USART1);
+
+        if (uart_buf_rx.count == UART_NBUF_RX) {
+            uart_buf_rx.count = 0;
+            uart_rx.is_new_data = 1;
+            *(uint32_t *)uart_rx.data = *(uint32_t *)uart_buf_rx.data;
+        }
+    }
+
+    if (LL_USART_IsActiveFlag_RTO(USART1)) {
+        LL_USART_ClearFlag_RTO(USART1);
+        uart_buf_rx.count = 0;
     }
 }
