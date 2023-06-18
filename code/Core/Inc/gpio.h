@@ -5,10 +5,10 @@
 #include "stm32f3xx.h"
 #include "stm32f3xx_ll_gpio.h"
 
-#define GPIO_TP_Pin          LL_GPIO_PIN_8
-#define GPIO_EXT_INTPUT_Pin  LL_GPIO_PIN_11
-#define GPIO_LED_Pin         LL_GPIO_PIN_12
-#define GPIO_Port        GPIOA
+#define GPIO_TP_Pin         LL_GPIO_PIN_8
+#define GPIO_EXT_INTPUT_Pin LL_GPIO_PIN_11
+#define GPIO_LED_Pin        LL_GPIO_PIN_12
+#define GPIO_Port           GPIOA
 
 void GPIO_Init(void);
 

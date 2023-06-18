@@ -1,12 +1,12 @@
 #include "main.h"
+#include "stm32f3xx_ll_bus.h"
 #include "rcc.h"
 #include "gpio.h"
 #include "periph.h"
 #include "opamp.h"
 #include "gen.h"
 #include "tools.h"
-
-#define UART_RX_NBUF 4
+#include "uart.h"
 
 enum __attribute__((packed)) cmd_id {
     CMD_START = 1,
@@ -21,40 +21,48 @@ enum __attribute__((packed)) cmd_id {
     CMD_FM = 10,
 };
 
-UART_HandleTypeDef huart1;
-uint32_t adc_number_samples = ADC_BUF_LEN_MAX;
 struct pac_adc pac_adc = {
     .preamble.id = 0x01,
 };
+
+struct cmd {
+    enum cmd_id id :8;
+    uint32_t arg   :24;
+};
+
+uint32_t adc_number_samples = ADC_BUF_LEN_MAX;
+
 volatile struct flags flags = {0};
 
 static uint32_t vco_sensitivity = VCO_SENSITIVITY_INIT;
-static uint8_t uart_buf[UART_RX_NBUF];
-
-static struct cmd {
-    enum cmd_id id :8;
-    uint32_t arg   :24;
-} cmd;
 
 static void Cmd_Work(struct cmd);
 static void Change_DF(uint32_t deviation_freq_kHz);
 static void Change_Amp(uint32_t amp_mV);
 static void Change_Sensitivity(uint32_t sensitivity);
-static void UART_Send_Test(UART_HandleTypeDef *huart);
+static void Send_Test(void);
 static void ADC_Start_Collect(uint32_t number_samples);
-static void UART_Send_ADC_Data(void);
-static void USART1_UART_Init(void);
+static void Send_ADC_Data(void);
 
 int main(void)
 {
-    HAL_Init();
+    /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+    LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_SYSCFG);
+    LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_PWR);
+
+    /* System interrupt init*/
+    NVIC_SetPriorityGrouping(NVIC_PRIORITYGROUP_4);
+
+    /* SysTick_IRQn interrupt configuration */
+    NVIC_SetPriority(SysTick_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 15, 0));
+
     RCC_SystemClock_Config();
     GPIO_Init();
     OPAMP1_Init();
     OPAMP2_Init();
     OPAMP3_Init();
     OPAMP4_Init();
-    USART1_UART_Init();
+    UART_Init();
 
     ADC12_Dual_Init();
     DAC1_Init();
@@ -67,8 +75,7 @@ int main(void)
     DAC1_Change_Fm(FREQ_30H517578125);
     DAC1_Start();
 
-    UART_Send_Test(&huart1);
-    HAL_UART_Receive_IT(&huart1, uart_buf, UART_RX_NBUF);
+    Send_Test();
 
     while (1) {
         static uint32_t led_cnt = 0;
@@ -77,13 +84,14 @@ int main(void)
             GPIO_LedToggle();
         }
 
-        if (flags.is_new_cmd) {
-            flags.is_new_cmd = 0;
+        if (uart_rx.is_new_data) {
+            uart_rx.is_new_data = 0;
+            struct cmd cmd = *(struct cmd *)&uart_rx.data;
             Cmd_Work(cmd);
         }
         if (flags.adc_data_collect) {
             flags.adc_data_collect = 0;
-            UART_Send_ADC_Data();
+            Send_ADC_Data();
         }
     }
 }
@@ -95,10 +103,10 @@ static void Cmd_Work(struct cmd cmd)
         ADC_Start_Collect(cmd.arg);
         break;
     case CMD_RESET:
-        HAL_NVIC_SystemReset();
+        NVIC_SystemReset();
         break;
     case CMD_TEST:
-        UART_Send_Test(&huart1);
+        Send_Test();
         break;
     case CMD_GEN_TYPE:
         Gen_Change_Type(cmd.arg);
@@ -158,65 +166,18 @@ static void ADC_Start_Collect(uint32_t number_samples)
     }
 }
 
-static void UART_Send_Test(UART_HandleTypeDef *huart)
+static void Send_Test(void)
 {
     struct cmd cmd = {
         .id = CMD_TEST,
         .arg = 0x112233};
 
-    HAL_UART_Transmit(huart, (uint8_t *)&cmd, sizeof(cmd), 1000);
+    UART_Send_Array(&cmd, sizeof(cmd));
 }
 
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+static void Send_ADC_Data(void)
 {
-    if (huart == &huart1) {
-        cmd = *(struct cmd *)uart_buf;
-        flags.is_new_cmd = 1;
-        HAL_UART_Receive_IT(&huart1, uart_buf, UART_RX_NBUF);
-    }
-}
-
-void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
-{
-    if (huart == &huart1) {
-        HAL_UART_Receive_IT(&huart1, uart_buf, UART_RX_NBUF);
-    }
-}
-
-static void UART_Send_ADC_Data(void)
-{
-    HAL_UART_Transmit_IT(
-        &huart1,
-        (uint8_t *)&pac_adc,
-        sizeof(pac_adc.preamble) + pac_adc.preamble.size);
-}
-
-/**
- * @brief USART1 Initialization Function
- * @param None
- * @retval None
- */
-static void USART1_UART_Init(void)
-{
-    NVIC_SetPriority(USART1_IRQn, 2);
-
-    huart1.Instance = USART1;
-    huart1.Init.BaudRate = UART_BAUD_RATE;
-    huart1.Init.WordLength = UART_WORDLENGTH_8B;
-    huart1.Init.StopBits = UART_STOPBITS_1;
-    huart1.Init.Parity = UART_PARITY_NONE;
-    huart1.Init.Mode = UART_MODE_TX_RX;
-    huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-    huart1.Init.OverSampling = UART_OVERSAMPLING_16;
-    huart1.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
-    huart1.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
-    if (HAL_UART_Init(&huart1) != HAL_OK) {
-        Error_Handler();
-    }
-
-    // Максимальное время между байтами в пакете 200 битовых знаков
-    HAL_UART_ReceiverTimeout_Config(&huart1, 200);
-    HAL_UART_EnableReceiverTimeout(&huart1);
+    UART_Send_Array(&pac_adc, sizeof(pac_adc.preamble) + pac_adc.preamble.size);
 }
 
 /**
