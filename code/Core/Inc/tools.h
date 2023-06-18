@@ -14,7 +14,7 @@ inline static uint32_t volt2code(u32_x_t volt, u32_x_t ref)
 }
 
 // deviation_freq - девиация частоты в кГц, от 0 до 200000
-// sensitivity - чувствительность в кГц, до 2000000
+// sensitivity - чувствительность в кГц/В, до 2000000
 inline static uint32_t df2code(uint32_t deviation_freq_kHz,
                                uint32_t sensitivity_kHz_V)
 {

@@ -34,12 +34,12 @@ uint32_t adc_number_samples = ADC_BUF_LEN_MAX;
 
 volatile struct flags flags = {0};
 
-static uint32_t vco_sensitivity = VCO_SENSITIVITY_INIT;
+static uint32_t vco_sensitivity_kHz_V = VCO_SENSITIVITY_INIT_kHz_V;
 
 static void Cmd_Work(struct cmd);
 static void Change_DF(uint32_t deviation_freq_kHz);
 static void Change_Amp(uint32_t amp_mV);
-static void Change_Sensitivity(uint32_t sensitivity);
+static void Change_Sensitivity(uint32_t sensitivity_kHz_V);
 static void Send_Test(void);
 static void ADC_Start_Collect(uint32_t number_samples);
 static void Send_ADC_Data(void);
@@ -132,9 +132,9 @@ static void Cmd_Work(struct cmd cmd)
     }
 }
 
-static void Change_Sensitivity(uint32_t sensitivity)
+static void Change_Sensitivity(uint32_t sensitivity_kHz_V)
 {
-    vco_sensitivity = sensitivity;
+    vco_sensitivity_kHz_V = sensitivity_kHz_V;
 }
 
 static void Change_DF(uint32_t deviation_freq_kHz)
@@ -143,7 +143,7 @@ static void Change_DF(uint32_t deviation_freq_kHz)
         return;
     }
 
-    uint32_t amp_code = df2code(deviation_freq_kHz, vco_sensitivity);
+    uint32_t amp_code = df2code(deviation_freq_kHz, vco_sensitivity_kHz_V);
     Gen_Change_AmpCode(amp_code);
 }
 
