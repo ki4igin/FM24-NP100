@@ -2,12 +2,10 @@
 #include "stm32f3xx_ll_gpio.h"
 #include "stm32f3xx_ll_usart.h"
 #include "stm32f3xx_ll_bus.h"
-#include "fifo.h"
 #include "buf.h"
 
-#define UART_BAUD_RATE 115200
+#define UART_BAUD_RATE 900000
 
-fifo_declare(uart_fifo_tx, UART_NBUF_TX);
 buf_declare(uart_buf_rx, UART_NBUF_RX);
 
 struct uart_rx uart_rx;
@@ -52,6 +50,7 @@ void UART_Init(void)
     LL_USART_SetRxTimeout(USART1, 200);
     LL_USART_EnableRxTimeout(USART1);
     LL_USART_EnableIT_RTO(USART1);
+    LL_USART_EnableIT_RXNE(USART1);
     LL_USART_Enable(USART1);
 }
 
@@ -59,22 +58,17 @@ void UART_Send_Array(void *buf, uint32_t size)
 {
     uint8_t *pbuf = buf;
     for (uint32_t i = 0; i < size; i++) {
-        fifo_push(&uart_fifo_tx, *pbuf++);
+        while (LL_USART_IsActiveFlag_TXE(USART1) == 0) {
+            ;
+        }
+        LL_USART_TransmitData8(USART1, *pbuf++);
     }
-    LL_USART_EnableIT_TXE(USART1);
 }
 
 void USART1_IRQHandler(void)
 {
-    if (LL_USART_IsActiveFlag_TXE(USART1) && LL_USART_IsEnabledIT_TXE(USART1)) {
-        LL_USART_TransmitData8(USART1, fifo_pop(&uart_fifo_tx));
-        if (fifo_is_empty(&uart_fifo_tx)) {
-            LL_USART_DisableIT_TXE(USART1);
-        }
-    }
-
     if (LL_USART_IsActiveFlag_RXNE(USART1)) {
-        uart_buf_rx.data[uart_buf_rx.count] = LL_USART_ReceiveData8(USART1);
+        uart_buf_rx.data[uart_buf_rx.count++] = LL_USART_ReceiveData8(USART1);
 
         if (uart_buf_rx.count == UART_NBUF_RX) {
             uart_buf_rx.count = 0;

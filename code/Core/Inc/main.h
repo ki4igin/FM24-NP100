@@ -3,11 +3,11 @@
 
 #include "stm32f3xx.h"
 
-#define DAC_AMP_CODE_INIT      200
+#define DAC_AMP_CODE_INIT          200
 
-#define ADC_BUF_LEN_MAX        8192
-#define DEVIATION_FREQ_MAX_kHz 200000
-#define VCO_SENSITIVITY_INIT_kHz_V   760000
+#define ADC_BUF_LEN_MAX            8192
+#define DEVIATION_FREQ_MAX_kHz     200000
+#define VCO_SENSITIVITY_INIT_kHz_V 760000
 
 #ifndef NVIC_PRIORITYGROUP_0
 #define NVIC_PRIORITYGROUP_0 ((uint32_t)0x00000007)

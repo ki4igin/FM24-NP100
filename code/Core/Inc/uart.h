@@ -3,7 +3,6 @@
 
 #include "stm32f3xx.h"
 
-#define UART_NBUF_TX 256
 #define UART_NBUF_RX 4
 
 extern struct uart_rx {
