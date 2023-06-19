@@ -2,6 +2,7 @@
 #include "stm32f3xx_ll_gpio.h"
 #include "stm32f3xx_ll_usart.h"
 #include "stm32f3xx_ll_bus.h"
+#include "stm32f3xx_ll_dma.h"
 #include "buf.h"
 
 #define UART_BAUD_RATE 900000
@@ -15,6 +16,7 @@ void UART_Init(void)
     /* Peripheral clock enable */
     LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_USART1);
     LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOA);
+    LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_DMA1);
 
     /**USART1 GPIO Configuration
     PA9   ------> USART1_TX
@@ -29,6 +31,15 @@ void UART_Init(void)
         .Alternate = LL_GPIO_AF_7,
     };
     LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+    /* USART1 DMA TX Init */
+    LL_DMA_SetDataTransferDirection(DMA1, LL_DMA_CHANNEL_4, LL_DMA_DIRECTION_MEMORY_TO_PERIPH);
+    LL_DMA_SetChannelPriorityLevel(DMA1, LL_DMA_CHANNEL_4, LL_DMA_PRIORITY_LOW);
+    LL_DMA_SetMode(DMA1, LL_DMA_CHANNEL_4, LL_DMA_MODE_NORMAL);
+    LL_DMA_SetPeriphIncMode(DMA1, LL_DMA_CHANNEL_4, LL_DMA_PERIPH_NOINCREMENT);
+    LL_DMA_SetMemoryIncMode(DMA1, LL_DMA_CHANNEL_4, LL_DMA_MEMORY_INCREMENT);
+    LL_DMA_SetPeriphSize(DMA1, LL_DMA_CHANNEL_4, LL_DMA_PDATAALIGN_BYTE);
+    LL_DMA_SetMemorySize(DMA1, LL_DMA_CHANNEL_4, LL_DMA_MDATAALIGN_BYTE);
 
     /* USART1 interrupt Init */
     NVIC_SetPriority(USART1_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 0, 0));
@@ -51,18 +62,21 @@ void UART_Init(void)
     LL_USART_EnableRxTimeout(USART1);
     LL_USART_EnableIT_RTO(USART1);
     LL_USART_EnableIT_RXNE(USART1);
+    LL_USART_EnableDMAReq_TX(USART1);
     LL_USART_Enable(USART1);
 }
 
 void UART_Send_Array(void *buf, uint32_t size)
 {
-    uint8_t *pbuf = buf;
-    for (uint32_t i = 0; i < size; i++) {
-        while (LL_USART_IsActiveFlag_TXE(USART1) == 0) {
-            ;
-        }
-        LL_USART_TransmitData8(USART1, *pbuf++);
-    }
+    LL_DMA_DisableChannel(DMA1, LL_DMA_CHANNEL_4);
+    LL_DMA_ConfigAddresses(
+        DMA1,
+        LL_DMA_CHANNEL_4,
+        (uint32_t)buf,
+        (uint32_t)&USART1->TDR,
+        LL_DMA_DIRECTION_MEMORY_TO_PERIPH);
+    LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_4, size);
+    LL_DMA_EnableChannel(DMA1, LL_DMA_CHANNEL_4);
 }
 
 void USART1_IRQHandler(void)

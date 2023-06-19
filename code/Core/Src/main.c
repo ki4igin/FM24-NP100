@@ -168,11 +168,11 @@ static void ADC_Start_Collect(uint32_t number_samples)
 
 static void Send_Test(void)
 {
-    struct cmd cmd = {
+    const struct cmd cmd = {
         .id = CMD_TEST,
         .arg = 0x112233};
 
-    UART_Send_Array(&cmd, sizeof(cmd));
+    UART_Send_Array((void *)&cmd, sizeof(cmd));
 }
 
 static void Send_ADC_Data(void)
